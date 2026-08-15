@@ -1,53 +1,57 @@
 # Python Study 🐍
 
-**Student website** for Python lectures and past exams (Tentor).
+Student website for Python **lectures** and **exams (Tentor)**.
 
-## 🌐 Live site
+## Live site
 
-Open the site (after enabling GitHub Pages):
+After enabling GitHub Pages (Settings → Pages → main branch):
 
-→ **https://itsyst.github.io/python-strudy/**
+**https://itsyst.github.io/python-strudy/**
 
-Or just open `index.html` locally.
+## How it works (dynamic)
 
-### Features
-- Clean dark UI with cyan/indigo accents
-- Navbar + live search
-- Click any lecture or exam → view code inside the page
-- Syntax highlighting + Copy button
+The site **automatically discovers** every `.py` file under:
+
+- `lectures/`
+- `exams/<date>/`
+
+**No hardcoded lists.**  
+Just add a file, push, refresh the site → it appears.
+
+```bash
+# Example: new exam exercise
+mkdir -p exams/2026-08-15
+# write exams/2026-08-15/ex6.py in VS Code
+git add exams/2026-08-15/ex6.py
+git commit -m "Add ex6"
+git push
+# → website shows it after a few seconds
+```
+
+> **Note:** The repo must be **public** for the live file list (GitHub API). File content still works when served by Pages.
+
+## Local preview
+
+```bash
+# VS Code: install "Live Server" → right-click index.html → Open with Live Server
+# Or:
+python -m http.server 8000
+# open http://localhost:8000
+```
 
 ## Structure
 
 ```
-├── index.html          # Student website
-├── assets/             # CSS + JS
-├── lectures/           # Cleaned lecture examples (lowercase)
-├── exams/              # Tentor by date (lowercase)
-├── TENTOR/             # Original exam files (legacy)
-└── LECTURE/            # Original lecture files (legacy)
+lectures/          # lecture examples
+exams/             # tentor by date (YYYY-MM-DD)
+  2024-01-09/
+  2025-08-19/
+  ...
+assets/            # website CSS + JS
+index.html
 ```
 
-## Quick start
+## Requirements
 
-```bash
-git clone https://github.com/itsyst/python-strudy.git
-cd python-strudy
-# open index.html in a browser
-# or enable GitHub Pages (Settings → Pages → Deploy from main)
-```
-
-## Lectures
-
-| File | Topic |
-|------|-------|
-| 01_data_structures.py | Lists, tuples, sets, dicts, generators |
-| 02_factorial.py | Exact + Stirling |
-| 03–10 | Strings, FizzBuzz, control flow, functions, exceptions… |
-
-## Exams
-
-Organized by date under `exams/` and original `TENTOR/`.
-
----
-
-Made for students · Clean & simple
+- Python 3.8+
+- Public repo recommended for the dynamic website
