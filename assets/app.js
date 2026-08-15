@@ -265,7 +265,7 @@ function escapeHtml(s) {
     .replace(/&/g, "&")
     .replace(/</g, "<")
     .replace(/>/g, ">")
-    .replace(/"/g, """);
+    .replace(/"/g, "=");
 }
 
 async function openFile(path, name) {
