@@ -1,0 +1,114 @@
+Rättningsmall för datortenta TDDD73 2017-08-16 14-19
+
+Uppgift 1
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+
+assert collatz(6) == [6, 3, 10, 5, 16, 8, 4, 2, 1]
+assert collatz(7) == [7, 22, 11, 34, 17, 52, 26, 13, 40, 20, 10, 5, 16, 8, 4, 2, 1]
+assert collatz(13) == [13, 40, 20, 10, 5, 16, 8, 4, 2, 1]
+
+
+Uppgift 2
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.0: Felaktig assert (syntax error)
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+ 0: en rekursiv implementation av en iterativ lösningsmodell.
+
+assert reverse_r([]) == []
+assert reverse_r([1]) == [1]
+assert reverse_r(['a', 'b']) == ['b', 'a']
+assert reverse_r([1, 3, 5]) == [5, 3, 1]
+assert reverse_r([2, 8, 4, 6]) == [6, 4, 8, 2]
+
+assert reverse_i([]) == []
+assert reverse_i([1]) == [1]
+assert reverse_i(['a', 'b']) == ['b', 'a']
+assert reverse_i([1, 3, 5]) == [5, 3, 1]
+assert reverse_i([2, 8, 4, 6]) == [6, 4, 8, 2]
+
+
+Uppgift 3
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Fel namn på funktionen 
+
+assert add_for_each([1, 2, 3, 4], lambda x: x**2) == 30
+assert add_for_each([[1, 2, 3], [1], [1, 2, 3, 4]], lambda x: len(x)) == 8
+temp = [[12,13,15,11], [8,9,10], [5,7,6], [8,9,11,10], [3,5,5,2]]
+average_max(temp) == 9.6
+
+
+Uppgift 4
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+
+assert palindrom([])
+assert palindrom([1])
+assert palindrom([1, 1])
+assert palindrom([1, 1, 1])
+assert palindrom([1, 1, 1, 1])
+assert palindrom([[1], [2], [1]])
+assert palindrom([[2, 2]])
+assert palindrom([[[3], [3]]])
+assert palindrom([[[[4]], [[4]]]])
+assert not palindrom([[[[4]], [4]]])
+assert not palindrom([1, 2])
+assert not palindrom([[1], 1])
+assert not palindrom([1, [1]])
+assert palindrom([[1, 2, 3], 2, [7], 2, [3, 2, 1]])
+assert not palindrom([[1, 2, 3]])
+
+
+Uppgift 5
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Felindenterad doc-string
+-0.5: Fel namn på funktionen 
+
+
+svensson = ['Erik', ['Olle', ['Eva', 'Karin', 'Anna'],
+                     ['Lars', 'Maria'],
+                     ['Per', 'Sofia']],
+            'Lisa',
+            ['Stina', ['Gunnar', 'Lasse'],
+             'Lennart']]
+
+assert ancestors('Maria', svensson) == ['Erik', 'Olle', 'Lars', 'Maria']
+assert ancestors('Erik', svensson) == ['Erik']
+assert ancestors('Gunnar', svensson) == ['Erik', 'Stina', 'Gunnar']
+assert ancestors('Barbro', svensson) == []
+
+
+Uppgift 6
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+
+b1 = create_bag()
+b1 = add_element(b1, 1)
+b1 = add_element(b1, 1)
+assert get_elements(b1) == [1, 1]
+assert contains(b1, 1)
+assert not contains(b1, "hej")
+b2 = create_bag()
+b2 = add_element(b2, 1)
+assert is_sub_bag(b2, b1)
+b2 = add_element(b2, 2)
+assert not is_sub_bag(b2, b1)
+b3 = bag_union(b1, b2)
+assert get_elements(b3) == [1, 1, 1, 2]
+b1 = remove_element(b1, 1)
+assert get_elements(b1) == [1]
+assert is_sub_bag(b1, b2)
+b4 = add_element(b1, 2)
+assert get_elements(b1) != get_elements(b4)

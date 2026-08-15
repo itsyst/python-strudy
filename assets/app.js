@@ -1,225 +1,376 @@
-/* Python Study – fully dynamic (no hardcoded file lists)
-   New files under lectures/ or exams/ appear automatically after you push.
-*/
+/* Python Study – dynamic site (auto-detects folders from files.json) */
 
-const OWNER = "itsyst";
-const REPO = "python-strudy";
-const BRANCH = "main";
+const KNOWN_META = {
+  exams: { title: "Exams", icon: "📝", desc: "Past tentor by date" },
+  labs: { title: "Labs", icon: "🔬", desc: "Labbar & solutions" },
+  exercises: { title: "Exercises", icon: "✏️", desc: "Practice exercises" },
+  seminars: { title: "Seminars", icon: "💬", desc: "Seminar examples" },
+  lectures: { title: "Lectures", icon: "📚", desc: "Lecture notes & code" },
+  projects: { title: "Projects", icon: "🚀", desc: "Project materials" },
+};
 
+let SECTIONS = [];
 let lastView = "home";
 let currentCode = "";
-let lecturesCache = [];
-let examsCache = []; // { group, items: [{name, path}] }
+let cache = {};
+let loaded = false;
 
-function $(id) { return document.getElementById(id); }
+function $(id) {
+  return document.getElementById(id);
+}
 
-/* ---------- GitHub API helpers ---------- */
-async function apiList(path) {
-  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`;
-  const res = await fetch(url, {
-    headers: { Accept: "application/vnd.github+json" }
-  });
-  if (!res.ok) {
-    if (res.status === 403 || res.status === 404) {
-      throw new Error("API_LIMIT_OR_PRIVATE");
-    }
-    throw new Error(`HTTP ${res.status}`);
+function metaFor(key) {
+  if (KNOWN_META[key]) return KNOWN_META[key];
+  const title = key.charAt(0).toUpperCase() + key.slice(1).replace(/[-_]/g, " ");
+  return { title, icon: "📁", desc: title + " materials" };
+}
+
+async function loadData() {
+  for (const url of ["files.json", "assets/files.json"]) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue;
+      const data = await res.json();
+      cache = data || {};
+      SECTIONS = Object.keys(cache);
+      loaded = true;
+      return;
+    } catch (_) {}
   }
-  return res.json();
-}
-
-async function loadLectures() {
-  const items = await apiList("lectures");
-  return items
-    .filter(f => f.type === "file" && f.name.endsWith(".py"))
-    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-    .map(f => ({
-      name: prettyName(f.name),
-      path: f.path,
-      icon: "📄"
-    }));
-}
-
-async function loadExams() {
-  const top = await apiList("exams");
-  const dirs = top
-    .filter(f => f.type === "dir")
-    .sort((a, b) => b.name.localeCompare(a.name)); // newest first
-
-  const groups = [];
-  for (const dir of dirs) {
-    const files = await apiList(dir.path);
-    const pyFiles = files
-      .filter(f => f.type === "file" && f.name.endsWith(".py"))
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-      .map(f => ({
-        name: f.name.replace(/\.py$/, ""),
-        path: f.path
-      }));
-    if (pyFiles.length) {
-      groups.push({ group: dir.name, items: pyFiles });
+  try {
+    const OWNER = "itsyst", REPO = "python-strudy", BRANCH = "main";
+    async function apiList(path) {
+      const r = await fetch(
+        "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + path + "?ref=" + BRANCH,
+        { headers: { Accept: "application/vnd.github+json" } }
+      );
+      if (!r.ok) throw new Error("api");
+      return r.json();
     }
+    const root = await apiList("");
+    const dirs = root
+      .filter(function (f) {
+        return f.type === "dir" && f.name !== "assets" && f.name !== ".github" && f.name.charAt(0) !== ".";
+      })
+      .map(function (f) { return f.name; });
+    const preferred = ["exams", "labs", "exercises", "seminars", "lectures", "projects"];
+    const finalOrder = preferred.filter(function (p) { return dirs.indexOf(p) !== -1; });
+    dirs.filter(function (d) { return preferred.indexOf(d) === -1; }).sort().forEach(function (d) {
+      finalOrder.push(d);
+    });
+
+    cache = {};
+    for (let i = 0; i < finalOrder.length; i++) {
+      const sec = finalOrder[i];
+      const top = await apiList(sec);
+      const subdirs = top
+        .filter(function (f) { return f.type === "dir"; })
+        .sort(function (a, b) { return b.name.localeCompare(a.name); });
+      const groups = [];
+      for (let j = 0; j < subdirs.length; j++) {
+        const d = subdirs[j];
+        const files = await apiList(d.path);
+        const items = files
+          .filter(function (f) {
+            return f.type === "file" && /\.(py|txt|md)$/i.test(f.name);
+          })
+          .map(function (f) { return { name: f.name, path: f.path }; });
+        if (items.length) groups.push({ group: d.name, items: items });
+      }
+      const loose = top
+        .filter(function (f) {
+          return f.type === "file" && /\.(py|txt|md)$/i.test(f.name);
+        })
+        .map(function (f) { return { name: f.name, path: f.path }; });
+      if (loose.length) groups.unshift({ group: "(root)", items: loose });
+      cache[sec] = groups;
+    }
+    SECTIONS = Object.keys(cache);
+    loaded = true;
+  } catch (e) {
+    throw e;
   }
-  return groups;
 }
 
-function prettyName(filename) {
-  return filename
-    .replace(/\.py$/, "")
-    .replace(/_/g, " ")
-    .replace(/^(\d+)\s/, "$1 · ");
+function ensureData() {
+  if (loaded) return Promise.resolve();
+  return loadData();
 }
 
-/* ---------- UI ---------- */
 function showView(name) {
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-  $(`view-${name}`).classList.add("active");
-  document.querySelectorAll(".nav-btn").forEach(b => {
+  document.querySelectorAll(".view").forEach(function (v) {
+    v.classList.remove("active");
+  });
+  const el = $("view-" + name);
+  if (el) el.classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(function (b) {
     b.classList.toggle("active", b.dataset.view === name);
   });
+  const links = $("nav-links");
+  if (links) links.classList.remove("open");
 }
 
 function showHome() {
   lastView = "home";
   showView("home");
-  $("search").value = "";
+  const s = $("search");
+  if (s) s.value = "";
+  renderHome();
 }
 
 async function showSection(section) {
   lastView = section;
-  showView(section);
-  $("search").value = "";
   await ensureData();
-  renderLists();
+  showView(section);
+  renderSection(section, ($("search") && $("search").value) || "");
 }
 
 function goBack() {
-  showSection(lastView === "viewer" ? "home" : lastView);
+  if (lastView === "home") showHome();
+  else showSection(lastView);
 }
 
-async function ensureData() {
-  if (lecturesCache.length || examsCache.length) return;
-  try {
-    $("lectures-list").innerHTML = "<p class='loading'>Loading…</p>";
-    $("exams-list").innerHTML = "<p class='loading'>Loading…</p>";
-    lecturesCache = await loadLectures();
-    examsCache = await loadExams();
-  } catch (e) {
-    const msg = e.message === "API_LIMIT_OR_PRIVATE"
-      ? "Could not list files. Make the repo <strong>public</strong> (needed for dynamic listing) or check rate limits."
-      : `Failed to load file list: ${e.message}`;
-    $("lectures-list").innerHTML = `<p class="error">${msg}</p>`;
-    $("exams-list").innerHTML = `<p class="error">${msg}</p>`;
+function countFiles(groups) {
+  return (groups || []).reduce(function (n, g) {
+    return n + ((g.items && g.items.length) || 0);
+  }, 0);
+}
+
+function buildUI() {
+  const nav = $("nav-links");
+  if (nav) {
+    nav.innerHTML = "";
+    const homeBtn = document.createElement("button");
+    homeBtn.className = "nav-btn active";
+    homeBtn.dataset.view = "home";
+    homeBtn.textContent = "Home";
+    homeBtn.onclick = showHome;
+    nav.appendChild(homeBtn);
+
+    SECTIONS.forEach(function (sec) {
+      const m = metaFor(sec);
+      const btn = document.createElement("button");
+      btn.className = "nav-btn";
+      btn.dataset.view = sec;
+      btn.textContent = m.title;
+      btn.onclick = function () { showSection(sec); };
+      nav.appendChild(btn);
+    });
+  }
+
+  const host = $("dynamic-sections");
+  if (host) {
+    host.innerHTML = "";
+    SECTIONS.forEach(function (sec) {
+      const m = metaFor(sec);
+      const section = document.createElement("section");
+      section.id = "view-" + sec;
+      section.className = "view";
+      section.innerHTML =
+        '<header class="section-header">' +
+        "<h2>" + m.icon + " " + m.title + "</h2>" +
+        "<p>" + m.desc + "</p>" +
+        "</header>" +
+        '<div id="' + sec + '-list" class="file-grid"></div>';
+      host.appendChild(section);
+    });
   }
 }
 
-function renderLists(filter = "") {
+function renderHome() {
+  const box = $("home-cards");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!SECTIONS.length) {
+    box.innerHTML =
+      '<p class="empty">No sections found. Add folders and run <code>python update_files.py</code>.</p>';
+    return;
+  }
+  SECTIONS.forEach(function (sec) {
+    const m = metaFor(sec);
+    const n = countFiles(cache[sec]);
+    const card = document.createElement("button");
+    card.className = "card";
+    card.type = "button";
+    card.onclick = function () { showSection(sec); };
+    card.innerHTML =
+      '<div class="card-icon">' + m.icon + "</div>" +
+      "<h3>" + m.title + "</h3>" +
+      "<p>" + m.desc + "</p>" +
+      '<span class="count">' + (n ? n + " files" : "Open →") + "</span>";
+    box.appendChild(card);
+  });
+}
+
+function renderSection(sec, filter) {
+  filter = filter || "";
+  const el = $(sec + "-list");
+  if (!el) return;
+  el.innerHTML = "";
   const q = filter.toLowerCase().trim();
-
-  // Lectures
-  const lecEl = $("lectures-list");
-  lecEl.innerHTML = "";
-  const lecs = lecturesCache.filter(f =>
-    !q || f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q)
-  );
-  if (!lecs.length) {
-    lecEl.innerHTML = "<p class='empty'>No lectures found. Add .py files under <code>lectures/</code> and push.</p>";
-  } else {
-    lecs.forEach(f => lecEl.appendChild(makeFileBtn(f.name, f.path, f.icon)));
-  }
-
-  // Exams
-  const exEl = $("exams-list");
-  exEl.innerHTML = "";
+  const groups = cache[sec] || [];
   let any = false;
-  examsCache.forEach(group => {
-    const items = group.items.filter(f =>
-      !q || f.name.toLowerCase().includes(q) || group.group.includes(q) || f.path.toLowerCase().includes(q)
-    );
+  groups.forEach(function (group) {
+    const items = group.items.filter(function (f) {
+      return (
+        !q ||
+        f.name.toLowerCase().indexOf(q) !== -1 ||
+        group.group.toLowerCase().indexOf(q) !== -1 ||
+        f.path.toLowerCase().indexOf(q) !== -1
+      );
+    });
     if (!items.length) return;
     any = true;
     const title = document.createElement("div");
     title.className = "group-title";
     title.textContent = group.group;
-    exEl.appendChild(title);
-    items.forEach(f => exEl.appendChild(makeFileBtn(f.name, f.path, "📝")));
+    el.appendChild(title);
+    items.forEach(function (f) {
+      el.appendChild(makeFileBtn(f.name, f.path));
+    });
   });
   if (!any) {
-    exEl.innerHTML = "<p class='empty'>No exams found. Add folders + .py files under <code>exams/</code> and push.</p>";
+    el.innerHTML =
+      '<p class="empty">No files found. Add files under <code>' +
+      sec +
+      "</code>, run <code>python update_files.py</code>, then refresh.</p>";
   }
 }
 
-function makeFileBtn(name, path, icon) {
+function makeFileBtn(name, path) {
   const btn = document.createElement("button");
   btn.className = "file-item";
-  btn.innerHTML = `
-    <div class="icon">${icon}</div>
-    <div class="meta">
-      <div class="name">${name}</div>
-      <div class="path">${path}</div>
-    </div>`;
-  btn.onclick = () => openFile(path, name);
+  btn.type = "button";
+  const icon = path.endsWith(".md")
+    ? "📘"
+    : path.endsWith(".txt")
+    ? "📃"
+    : "📄";
+  btn.innerHTML =
+    '<div class="icon">' +
+    icon +
+    '</div><div class="meta"><div class="name">' +
+    escapeHtml(name) +
+    '</div><div class="path">' +
+    escapeHtml(path) +
+    "</div></div>";
+  btn.onclick = function () {
+    openFile(path, name);
+  };
   return btn;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, """);
 }
 
 async function openFile(path, name) {
   showView("viewer");
   $("viewer-title").textContent = name || path;
+  const raw = $("raw-link");
+  if (raw) {
+    raw.href = path;
+    raw.setAttribute("download", name || "");
+  }
   $("code-content").textContent = "Loading…";
   currentCode = "";
-
   try {
-    // Relative path → works on GitHub Pages and local Live Server
     const res = await fetch(path);
-    if (!res.ok) throw new Error("Not found");
+    if (!res.ok) throw new Error("Not found (" + res.status + ")");
     const text = await res.text();
     currentCode = text;
-    $("code-content").innerHTML = highlightPython(text);
+    $("code-content").innerHTML = highlight(text, path);
   } catch (e) {
-    $("code-content").textContent = `Could not load:\n${path}\n\n${e.message}`;
+    $("code-content").textContent =
+      "Could not load:\n" + path + "\n\n" + e.message;
   }
 }
 
-function highlightPython(code) {
+function highlight(code, path) {
   const escaped = code
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">");
+  if (!/\.py$/i.test(path || "")) return escaped;
   return escaped
     .replace(/(#.*)$/gm, '<span class="cmt">$1</span>')
-    .replace(/("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/g, '<span class="str">$1</span>')
-    .replace(/\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|assert|lambda|True|False|None|in|not|and|or|pass|break|continue|raise|yield|async|await)\b/g, '<span class="kw">$1</span>')
+    .replace(
+      /("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/g,
+      '<span class="str">$1</span>'
+    )
+    .replace(
+      /\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|assert|lambda|True|False|None|in|not|and|or|pass|break|continue|raise|yield|async|await|global|nonlocal|match|case)\b/g,
+      '<span class="kw">$1</span>'
+    )
     .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
-    .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g, '<span class="fn">$1</span>');
+    .replace(
+      /\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g,
+      '<span class="fn">$1</span>'
+    );
 }
 
 function copyCode() {
   if (!currentCode) return;
-  navigator.clipboard.writeText(currentCode).then(() => {
+  navigator.clipboard.writeText(currentCode).then(function () {
     const btn = document.querySelector(".copy-btn");
+    if (!btn) return;
     btn.textContent = "Copied!";
     btn.classList.add("copied");
-    setTimeout(() => {
+    setTimeout(function () {
       btn.textContent = "Copy";
       btn.classList.remove("copied");
     }, 1500);
   });
 }
 
-/* Search */
-$("search").addEventListener("input", (e) => {
-  const q = e.target.value;
-  const onList =
-    $("view-lectures").classList.contains("active") ||
-    $("view-exams").classList.contains("active");
-  if (onList) {
-    renderLists(q);
-  } else if (q) {
-    showSection("lectures").then(() => renderLists(q));
-  }
-});
+function wireSearch() {
+  const input = $("search");
+  if (!input) return;
+  input.addEventListener("input", function (e) {
+    const q = e.target.value;
+    const active = SECTIONS.find(function (s) {
+      const v = $("view-" + s);
+      return v && v.classList.contains("active");
+    });
+    if (active) renderSection(active, q);
+    else if (q && SECTIONS[0]) {
+      showSection(SECTIONS[0]).then(function () {
+        renderSection(SECTIONS[0], q);
+      });
+    }
+  });
+}
 
-/* Init */
-showHome();
-// Preload in background so first click is fast
-ensureData().then(() => renderLists()).catch(() => {});
+function wireToggle() {
+  const toggle = $("nav-toggle");
+  if (toggle) {
+    toggle.onclick = function () {
+      const links = $("nav-links");
+      if (links) links.classList.toggle("open");
+    };
+  }
+}
+
+async function boot() {
+  wireSearch();
+  wireToggle();
+  showHome();
+  try {
+    await ensureData();
+    buildUI();
+    renderHome();
+  } catch (e) {
+    console.warn(e);
+    const box = $("home-cards");
+    if (box) {
+      box.innerHTML =
+        '<p class="error">Could not load file list. Run <code>python update_files.py</code> and refresh.</p>';
+    }
+  }
+}
+
+boot();

@@ -1,0 +1,241 @@
+
+          Datortentamen i kursen TDDD64 Programmering i Python
+
+                     tisdag 18 december kl 8-13
+
+-----------------------------------------------------------------------------
+ Uppgift 1
+-----------------------------------------------------------------------------
+
+*** Deluppgift 1A (2,5p) ***
+
+Skriv en funktion echo som tar en sträng och producerar ett eko. Ett eko
+består i det här fallet av originalsträngen, följt av andra halvan av strängen,
+följt av den sista fjärdedelen av strängen. Antag att strängen alltid består
+av minstfyra tecken. Följande körexempel visar hur det ska se ut:
+
+  >>> echo("Korvbröd")
+  'Korvbröd bröd öd'
+  >>> echo("Hejsan")
+  'Hejsan san n'
+  >>> echo("Julgran")
+  'Julgran ran n'
+
+*** Deluppgift 1B (2,5p) ***
+
+Skriv en funktion initials som tar en sträng som innehåller ett namn och
+returnerar en sträng som innehåller initialerna. Strängen antas vara
+formatterad så att den endast består av bokstäver och mellanslag, och det
+är enbart ett mellanslag mellan namnen. Alla namn börjar också med stor
+bokstav.
+
+  >>> initials("Kalle Anka")
+  'KA'
+  >>> initials("Per Anders Fogelström")
+  'PAF'
+
+-----------------------------------------------------------------------------
+ Uppgift 2
+-----------------------------------------------------------------------------
+
+Vi vill ha en funktion add_list som tar en rak lista som kan innehålla tal
+eller strängen 'infinity'. Funktionen ska returnera summan av talen. Om 
+strängen 'infinity' finns med i listan ska 'infinity' returneras som värde,
+annars summan av talen. I lösningen kan du utgå från att detta är det enda
+som kan förekomma i listan, d.v.s. du behöver inte göra några ytterligare
+felkontroller.
+
+Du får bara bearbeta elementen i listan en enda gång, d.v.s. du kan inte
+först kontrollera om 'infinity' finns med för att därefter summera talen.
+
+Innan du definierar add_list ska du först definiera hjälpfunktionen add som
+kan addera två saker som antingen är tal eller strängen 'infinity'. Exempel:
+
+  >>> add(2, 3)
+  5
+  >>> add(3, 'infinity')
+  'infinity'
+  >>> add_list([1, 2, 3, 4])
+  10
+  >>> add_list([1, 2, 'infinity', 4])
+  'infinity'
+
+Funktionen add_list ska finnas i två varianter: en som arbetar rekursiv 
+(add_list_r) och en som arbetar iterativ (add_list_i). Båda ska använda
+hjälpfunktionen add.
+
+-----------------------------------------------------------------------------
+ Uppgift 3
+-----------------------------------------------------------------------------
+
+*** Deluppgift 3A (3p) ***
+
+Skriv en högre ordningens funktion add_for_each som tar en rak lista och
+en funktion. Funktionen add_for_each ska applicera den givna funktionen
+på varje element i listan och summera ihop de erhållna resultaten. Exempel:
+
+  >>> add_for_each([1, 2, 3, 4], lambda x: x**2)
+  30
+  >>> add_for_each([[1, 2, 3], [1], [1, 2, 3, 4]], lambda x: len(x))
+  8
+
+I denna uppgift ställs inga särskilda krav på rekursiva eller iterativa
+lösningar, utan problemet får lösas på valfritt sätt. 
+
+*** Deluppgift 3B (2p) ***
+
+Vi har en lista med listor som innehåller temperaturmätningar under olika
+dagar. Varje underlista motsvarar en dag. Vi är nu intresserade av att veta
+genomsnittet av alla maxtemperaturer. Skriv en funktion average_max
+som tar en lista med listor av mätvärden och som med hjälp av add_for_each
+beräknar genomsnittet av maxvärdena. Exempel:
+
+  >>> temp = [[12,13,15,11],[8,9,10],[5,7,6],[8,9,11,10],[3,5,5,2]]
+  >>> average_max(temp)
+  9.6
+
+Maxvärdena för de fem olika dagarna i exemplet ovan är 15, 10, 7, 11 och 5.
+Genomsnittet av dessa tal är 9.6.
+
+-----------------------------------------------------------------------------
+ Uppgift 4
+-----------------------------------------------------------------------------
+
+Vi vill ha en abstrakt datatyp som vi kallar ring. Ett ringobjekt kan
+innehålla ett godtyckligt antal element som är cykliskt ordnade, där ett av
+dem benämns toppelement. Vi vill ha följande primitiva funktioner:
+
+  make_ring : list of elements -> ring
+
+    Skapar och returnerar en ny ring från en lista med element där första
+    elementet i listan är toppelement i ringen.
+  
+  is_ring : any object -> truth value
+
+    Kontrollerar om det givna objektet är en ring.
+  
+  top : ring -> element
+
+    Returnerar toppelementet i ringen.
+  
+  left_rotate : ring -> ring
+
+    Returnerar en ny ring genom att elementen roteras ett steg åt vänster.
+  
+  right_rotate : ring -> ring
+
+    Returnerar en ny ring genom att elementen roteras ett steg åt höger.
+
+  left_rotate_in : ring -> 
+
+    Roterar elementen i den aktuella ringen ett steg åt vänster. Inga
+    nya objekt ska skapas eller returneras, utan ringen ska modifieras
+    på plats.
+  
+  right_rotate_in : ring -> 
+
+    Roterar elementen i den aktuella ringen ett steg åt höger. Inga
+    nya objekt ska skapas eller returneras, utan ringen ska modifieras
+    på plats.
+  
+Här följer några exempel på hur primitiverna ska fungera:
+
+  >>> ring1 = make_ring([1, 2, 3])
+  >>> top(ring1) 
+  1
+  >>> top(left_rotate(ring1))
+  2
+  >>> top(right_rotate(ring1))
+  3
+  >>> top(left_rotate(left_rotate(left_rotate(ring1))))
+  1
+  >>> ring2 = make_ring(['a', 'b', 'c'])
+  >>> top(ring2)
+  'a'
+  >>> left_rotate_in(ring2)
+  >>> top(ring2)
+  'b'
+  >>> right_rotate_in(ring2)
+  >>> right_rotate_in(ring2)
+  >>> top(ring2)
+  'c'
+
+Välj en lämplig representation för objekt av typen ring och definiera
+primitiverna (enligt samma principer som i laborationsomgång 6).
+
+-----------------------------------------------------------------------------
+ Uppgift 5
+-----------------------------------------------------------------------------
+
+Ett expertsystem är ett datorprogram som innehåller kodad kunskap och som kan
+hjälpa människor att analysera situationer och fatta beslut. Här nedanför
+finns en enkel datastruktur som innehåller kunskap om ett antal djur och som
+kan användas för att ställa frågor till en person som ser ett djur framför sig
+och vill veta vad det är.
+
+Datastrukturen är i grund och botten en dictionary som innehåller ett antal
+olika noder. En del noder innehåller frågor och ett antal alternativ. Tanken är
+att expertsystemet då ska presentera frågan och alternativen, och låta 
+användaren välja ett av dem. Beroende på användarens svar fortsätter 
+utfrågningen på en ny nod. En del av noderna är svar, d.v.s. om man kommer
+dit har expertsystemet en kvalificerad gissning om vilket djur det rör sig om.
+Man börjar alltid frågandet i första noden. Ett exempel på hur expersystemet
+kan se ut när man använder det visas här:
+
+  >>> expert(animals)
+  Var lever djuret?
+    1. på land
+    2. i vatten
+    3. i luften
+  > 1
+  Hur många ben har djuret?
+    1. två
+    2. fyra
+    3. många
+  > 1
+  Jag tror att det är en apa.
+  
+Definiera funktionen expert som kan ta emot en datastruktur som ser ut som
+exemplet animals nedan och successivt ställa frågor till användaren enligt
+körexemplet ovan. Använd animals (se nedan) som teststruktur, men utforma
+funktionen expert så att den är generell och inte är anpassad för just detta
+exempel.
+
+I denna uppgift är det inte nödvändigt att skapa en abstrakt datatyp, utan
+fokus ligger på att rent algoritmiskt kunna bearbeta den givna strukturen.
+Vi vill dock ha en snygg lösning som inkluderar felhantering av användarens
+inmatning.
+
+  animals = {
+    1: ("Var lever djuret?", ("på land", 2), ("i vatten", 3), ("i luften", 4)),
+    2: ("Hur många ben har djuret?", ("två", 5), ("fyra", 6), ("många", 7)),
+    3: "en fisk",
+    4: ("Ungefär hur stort är det?", ("litet", 8), ("stort", 9)),
+    5: "en apa",
+    6: ("Hur ser djuret ut utanpå?", ("taggar", 10), ("päls", 11)),
+    7: "en insekt av något slag",
+    8: ("Hur ser djuret ut?", ("grått", 12), ("rött bröst", 13), ("blå och gul", 14)),
+    9: ("Hur beter sig djuret?", ("glidflyger", 15), ("hoar om natten", 16)),
+    10: "en igelkott",
+    11: ("Hur låter djuret?", ("miau", 17), ("vov", 18)),
+    12: "en gråsparv",
+    13: "en domherre",
+    14: "en blåmes",
+    15: "en örn",
+    16: "en uggla",
+    17: "en katt",
+    18: "en hund"}
+
+-----------------------------------------------------------------------------
+ Uppgift 6
+-----------------------------------------------------------------------------
+
+Skriv en funktion count som går igenom en rak lista och returnerar en lista
+av tupler som talar om hur många av elementen som fanns i rad. Följande
+exempel visar lite tydligare vad poängen är:
+
+  >>> count(['g', 'a', 'a', 'g', 'c', 't', 't', 't', 'a', 'c', 'c'])
+  [('g', 1), ('a', 2), ('g', 1), ('c', 1), ('t', 3), ('a', 1), ('c', 2)]
+
+Funktionen count ska finnas i två varianter: en som arbetar rekursivt
+(count_r) och en som arbetar iterativt (count_i).

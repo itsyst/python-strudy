@@ -1,0 +1,30 @@
+RÃ¤ttningsmall fÃ¶r datortenta TDDD73 2016-01-12 fm
+
+Uppgift 1
+ -0.0: Print istÃ¤llet fÃ¶r return
+ -1.0: Felaktigt svar pga dÃ¥lig fÃ¶rstÃ¥else fÃ¶r grundlÃ¤ggande python-satser
+ 
+Uppgift 2
+ -1.0: Reverse pÃ¥ listan istÃ¤llet fÃ¶r strÃ¤ngarna
+ -0.5: Destruktiv lÃ¶sning
+ -0.5: DÃ¥lig stil
+ -0.5: Print istÃ¤llet fÃ¶r return
+ -0.5: TvÃ¥ funktioner i en, bÃ¥de hantera strÃ¤ngar och listor
+
+Uppgift 3a
+ -1.0: Avsaknad av lÃ¤mpliga primitiver
+ -1.0: Anropar inte fn pÃ¥ i alla fall
+ -0.5: Delar upp i onÃ¶diga delfall, t.ex. om det Ã¤r tvÃ¥ lÃ¶v, ett lÃ¶v och ett deltrÃ¤d, osv.
+ -0.5: DÃ¥lig stil/praxis
+ 
+Uppgift 3b
+ -0.5: Antar att 0 Ã¤r speciellt sÃ¥ att det inte rÃ¤knas.
+ -1.0: Klarar inte negativa tal.
+ -1.0: AnvÃ¤nder tree_apply fÃ¶r att platta ut trÃ¤det till en lista 
+ -0.0: Anropa tree_apply tvÃ¥ gÃ¥nger, en fÃ¶r att hitta minsta och en gÃ¥ng fÃ¶r nÃ¤st minsta.
+
+Uppgift 4
+ -3.0: Girig lÃ¶sning som relativt enkelt kan leda till en fungerande lÃ¶sning
+ -4.0: Girig lÃ¶sning som inte enkelt leder till en fungerande lÃ¶sning
+ -0.5: Avsaknad av lÃ¤mpliga docstrings eller kommentarer
+ -0.0: Tar bort s1 och s2, sÃ¥ att lcs("abc", "abc") returnerar 2. Uppgiften inkluderar inte abc som en delsekvens av abc.

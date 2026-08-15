@@ -1,0 +1,400 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlämningar hade granskats.
+
+Tanken är både att ge mer information kring hur man kan tänka när man löser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstått under
+just denna tentaomgång.  Vi fokuserar då på de fel som faktiskt har uppstått,
+inte sådana som teoretiskt kunde ha uppstått, och de fall där felen tyder på
+specifika tankefel och liknande missar snarare än slumpmässiga misstag eller
+slarv.  Vid omtentor, där det är färre som går upp på tentan, blir det ofta
+också färre typfel att diskutera.
+
+Lösningsförslag kan finnas inbakade i informationen eller i en separat fil.
+Tänk på att det går att lösa uppgifterna på många olika sätt och att det inte
+automatiskt är fel bara för att en lösning ser annorlunda ut.
+
+=============================================================================
+
+Hur svår en tenta egentligen är beror på både uppgifternas svårighet,
+poängsättningen, och poänggränserna.  Detta betyder att poänggränser inte
+måste vara samma från tenta till tenta.  För denna tenta har vi följande
+betygsgränser:
+
+15p krävs för godkänt / betyg 3.
+
+20p krävs för betyg 4.
+
+25p krävs för betyg 5.
+
+=============================================================================
+Allmän information om uppgift 1
+=============================================================================
+
+I den här uppgiften testade vi enklare former av Python-programmering.  Av
+134 inlämningar har 130 full poäng, och vi kan inte notera några speciella
+mönster i de fel som har uppstått.
+
+En enkel lösning är:
+
+def facit_gapful(n: int):
+    digits = str(n)
+    divisor = int(digits[0] + digits[-1])
+    return n % divisor == 0
+
+Ett alternativt sätt att testa delbarhet:
+
+def facit_gapful_2(n: int):
+    digits = str(n)
+    divisor = int(digits[0] + digits[-1])
+    return (n / divisor) % 1 == 0
+
+En enkel one-liner är följande, även om den konverterar heltalet till en
+sträng två gånger:
+
+def gapful(n: int):
+    return n % int(str(n)[0] + str(n)[-1]) == 0
+
+Det finns också alternativ baserade på att dividera talet med en lämplig
+10-potens för att få ut första siffran, antingen genom att direkt räkna ut
+korrekt 10-potens eller genom att iterera och t.ex. dividera med 10 varje
+gång.
+
+Ett vanligt mönster är:
+
+    if n % number == 0:
+        return True
+    else:
+        return False
+
+Detta behövs oftast inte, eftersom en jämförelse som "...==0" redan ger
+svaret True eller False.  Man kan alltså helt enkelt skriva "return n %
+number == 0".
+
+
+
+=============================================================================
+Allmän information om uppgift 2
+=============================================================================
+
+Uppgift 2 handlar om att lösa samma problem både iterativt och med rekursiv
+lösningsmodell.
+
+I båda delarna finns ett antal inlämningar där man på ett eller annat sätt
+har testat *elementens* värden istället för *index*.
+
+Det händer också att man använder en for-loop tillsammans med
+seq.index(element) för att hitta positionen för ett element; som vi har
+varnat fungerar inte detta om man har flera element med samma värde.  På
+samma sätt har man försökt testa om man har nått slutet genom att se om
+elementet == seq[-1], men det fungerar inte för t.ex. [1,2,3,4,3].
+
+För 2b finns flera lösningar som inte använder rekursiv lösningsmodell.
+Detta innebär som sagt mer än att bara ha en funktion som anropar sig själv:
+Varje rekursivt anrop ska returnera lösningen på ett äkta delproblem.
+
+Detta är två möjliga lösningar:
+
+def facit_reverse_pairs_i(seq: list):
+    result = []
+
+    for pos in range(0, len(seq), 2):
+        if pos + 1 < len(seq):
+            result.append(seq[pos + 1])
+        result.append(seq[pos])
+
+    return result
+
+
+def facit_reverse_pairs_r(seq: list):
+    if not seq:
+        return []
+    elif len(seq) == 1:
+        return seq
+    else:
+        return [seq[1], seq[0]] + facit_reverse_pairs_r(seq[2:])
+
+
+=============================================================================
+Allmän information om uppgift 3
+=============================================================================
+
+I denna uppgift testar vi framförallt förmågan att hantera nästlade och
+rekursiva strukturer.  Detta kan man göra rekursivt, men även på andra sätt.
+Man behöver inte nödvändigtvis använda en rekursiv *lösningsmodell* här; det
+testades istället i uppgift 2.
+
+def facit_doubled_odds(seq: list):
+    result = []
+    for element in seq:
+        if isinstance(element, list):
+            # Rekursera ner i listor för att behandla deras element
+            result.append(facit_doubled_odds(element))
+        elif isinstance(element, int) and element % 2 == 1:
+            # Specialbehandla udda heltal
+            result.append(element * 2)
+        else:
+            # Allt annat är bara godtyckliga element som "kopieras över"
+            result.append(element)
+    return result
+
+Lösningen ovan använder "iteration åt höger" (över elementen i en lista), och
+"rekursion nedåt" (för den godtyckligt djupa nästlingen av listor).  Det går
+också att rekursera både nedåt och åt höger.  I båda fallen behöver man dock
+se upp så man inte rekurserar *ner* för *alla* element; då blir seq inte
+alltid en lista, och det kan bli jobbigare att hålla reda på exakt vad man
+håller på med och vad man förväntas göra med värdet.
+
+Här blir det ibland fel på hanteringen av olika typer.  Vi ska behandla
+nästlade *listor*, och tupler är inte listor så vi ska inte på något sätt
+rekursera ner i dem.  Vi ska också särbehandla udda *heltal*, men det betyder
+inte att allt måste vara heltal eller listor.  Elementen behöver inte heller
+vara tupler eller strängar, även om det var de enda andra typer som råkade
+finnas med i testfallen.   Det är en *godtycklig* nästlad lista det handlar
+om.
+
+Ibland blir det fel med rekursionen ner i listor, t.ex. genom att man inte
+gör något med resultatet av det rekursiva anropet eller genom att nästlade
+listor läggs till utan att behandlas.
+
+I ett par fall har man t.ex. använt 'not x' för att testa om x är en tom
+lista -- vilket inte fungerar om x är 0 eller "".
+
+Det kan vara intressant att veta att om man anropar doubled_odds(seq[1:]) två
+gånger i samma anrop kommer det att gå åt *exponentiellt* mycket mer tid.  På
+varje rekursionsnivå dubbleras arbetet, alltså 2*2*2*2*..... osv.  Här är det
+verkligen värt att spara svaret i en variabel och sedan använda samma
+resultat två gånger istället.
+
+
+
+=============================================================================
+Allmän information om uppgift 4
+=============================================================================
+
+Här testar vi användningen av högre ordningens funktioner, både sådana som
+returnerar nya funktioner och sådana som tar funktioner som parameter.
+
+För att applicera en funktion times gånger definierar vi först en inre
+funktion retfun, som ska göra själva jobbet, och returnerar sedan denna
+funktion.
+
+def facit_multiple_apply(fn, times: int):
+    def retfun(x):
+        for k in range(times):
+            x = fn(x)
+        return x
+
+    return retfun
+
+Vi definierar pow2mult genom att skapa något som multiplicerar med 2 (lambda
+y: 2 * y) n gånger, och applicerar sedan detta på värdet c.
+
+def facit_pow2mult(n: int, c: int):
+    multiplier = facit_multiple_apply(lambda y: 2 * y, n)
+    return multiplier(c)
+
+Här finns ett antal lösningar som anropar fn(x) en gång för lite eller en
+gång för mycket.  Det finns också ett antal olika varianter på att addera
+fn(x) times gånger, att beräkna fn med fel grundvärde, och att generellt sett
+råka trassla in sig en del i lambda-funktionerna.  Slutligen ska vi nämna att
+några lösningar inte returnerar en funktion utan applicerar fn(x) direkt och
+returnerar resultatet.
+
+För pow2mult händer det att man inte genomför n dubbleringar med
+multiple_apply(), som tipset också visar att man ska göra, utan använder
+operatorn **.  Ibland leder detta till att man får rätt resultat, men på ett
+sätt som gör användandet av multiple_apply() meningslöst (man använder den
+för att applicera en funktion en enda gång, och då kunde man lika gärna ha
+applicerat den utan multiple_apply; poängen var just att vi vill dubblera n
+gånger).  Andra gånger leder det till att man beräknar 2^(2^(2^(2^...n))),
+vilket lätt blir extremt stora tal, så stora att Python inte kan beräkna dem
+på rimlig tid, eller så stora att de omöjligen kan få plats i minnet (!).
+Det kan hända att man inte upptäckte detta för att man också hade gjort fel i
+multiple_apply(), och detta är inte ovanligt i programmering -- det är
+viktigt att alla delar blir rätt, så att man inte råkar ut för denna typ av
+följdfel.
+
+En vanligare fallgrop är att blanda ihop parametrarna till olika funktioner,
+som i "lambda n, c: multiple_apply(lambda c: 2*c, n)(c)" där det finns två
+olika c vilket kan leda till att man inte själv förstår vilket c man
+egentligen använder.  Det händer också att pow2mult(x) returnerar en funktion
+istället för ett värde.
+
+
+
+=============================================================================
+Allmän information om uppgift 5
+=============================================================================
+
+Primtal kan vi hitta på något av dessa två sätt.
+
+def facit_is_prime(n: int):
+    if n < 2:
+        return False
+    for divisor in range(2, int(math.sqrt(n)) + 1):
+        if n % divisor == 0:
+            return False
+    return True
+
+
+def facit_is_prime_2(n: int):
+    return n >= 2 and all(n % divisor != 0 for divisor in range(2, int(math.sqrt(n)) + 1))
+
+Lite för många lösningar har testat att dividera upp till n//2 eller n//2+1
+istället för int(math.sqrt(n)), vilket gör lösningarna extremt långsamma när
+vi når upp till n i storleksordningen miljarder.  Vi har inte dragit några
+poäng för det eftersom vi inte har ställt specifika prestandakrav.
+
+Det är också lite för vanligt att man missar att dividera med tillräckligt
+stora tal.  Det kan t.ex. hända om man glömmer att range(2,10) bara räknar
+upp talen 2,3,4,5,6,7,8,9 och *inte* 10.  Det här hade man lätt kunnat
+upptäcka med ett väldigt enkelt test:
+
+    for k in range(20):
+        print(k, is_prime(k))
+
+För detta test skulle ett antal av er direkt ha sett att is_prime(4)
+returnerar None, att is_prime(9) returnerar False, att is_prime(15)
+returnerar True, att alla tal tros vara primtal, eller liknande.  Det krävs
+inte alltid ett stort arbete med testerna för att man ska hitta viktiga fel.
+
+Samma test hade också upptäckt felet när man skriver
+
+    for divisor in range(2, int(math.sqrt(n)) + 1):
+        if n % divisor == 0:
+            return False
+        else
+            return True
+
+så att man returnerar True så snart man hittar något tal som inte delar n,
+istället för att vänta till man har testat alla tänkbara divisorer.
+
+Primtalsfaktorer kan vi hitta på detta sätt.
+
+def facit_prime_factors(n: int):
+    # This isn't efficient for larger numbers, but that wasn't required.
+    # Could also use a sieve to find primes, or more advanced methods.
+    factors = []
+    prime = 2
+    while n != 1:
+        if n % prime == 0:
+            factors.append(prime)
+            n /= prime
+            # Iterate and try the same factor again
+        else:
+            # Find next prime
+            prime += 1
+            while not is_prime(prime):
+                prime += 1
+    return factors
+
+Även här har några lösningar haft problem med att inte iterera tillräckligt
+långt för att hitta alla tänkbara primtal. Den lösning som föreslås ovan
+itererar till n==1, och det måste så småningom hända.  Man kan också sätta
+ett villkor på prime istället och testa med primtal upp till och med
+int(math.sqrt(n)), *om* man också inser att n fortfarande kan vara ett
+primtal (en faktor till) när loopen är slut -- exempelvis för 22 (iteration
+upp till 4 hittar faktorn 2, och sedan finns faktorn 11 kvar att behandla).
+
+Lösningen kan förkortas:
+
+def facit_prime_factors_2(n: int):
+    factors = []
+    while n != 1:
+        for divisor in range(1, n+1):
+            if n % divisor == 0 and is_prime(divisor):
+                factors.append(divisor)
+                n //= divisor
+    return factors
+
+Men detta kan bara hitta en "instans" av varje primtalsfaktor i varje yttre
+iteration.  Därför blir det långsammare för tal som 128 (2*2*2*2*2*2*2), där
+man måste iterera 7*n gånger.  (Även den ursrprungliga lösningen kan
+optimeras, t.ex. genom att stega upp med 2 i varje steg när man väl har nått
+fram till divisorn 3, eller genom att på effektivare sätt hitta alla primtal
+upp till en övre gräns).
+
+Rekursiva varianter kan också fungera, men de rent rekursiva har ofta
+liknande egenskaper -- varje gång en primtalsfaktor hittas sker en rekursion
+där man börjar om med att leta faktorer från 2.
+
+Vissa lösningar hittar först alla primtal upp till en viss gräns och testar
+sedan vilka av dessa som är divisorer.  Det kan också påverka prestanda,
+speciellt om man testar stora primtal upp till n//2 där detta sedan visar sig
+inte behövas, men det är samtidigt en bra form av divide and conquer där man
+kan söka fel i varje problemhalva för sig.
+
+Attraktiva tal kan vi till slut hitta på detta sätt:
+
+def facit_is_attractive(n: int):
+    return facit_is_prime(len(facit_prime_factors(n)))
+
+
+=============================================================================
+Allmän information om uppgift 6
+=============================================================================
+
+För att hitta alla olika sätt att dela upp "godispåsarna" i två olika högar
+kan vi göra så här.  Lösningen är rekursiv, med ett basfall där inte har
+några godispåsar.  Om det fanns godispåsar hittar vi först alla sätt att dela
+upp "resten" av dem, med facit_all_splits(seq[1:]).  Varje sådant sätt --
+varje kombination av två högar -- ska nu fördubblas, genom att vi lägger även
+den första påsen seq[0] i *antingen* den ena högen *eller* den andra högen.
+
+def facit_all_splits(seq):
+    if not seq:
+        return [([], [])]
+
+    ret = []
+    for seq1, seq2 in facit_all_splits(seq[1:]):
+        ret.append((seq1 + [seq[0]], seq2))
+        ret.append((seq1, seq2 + [seq[0]]))
+
+    return ret
+
+När detta är gjort behöver vi bara hitta det "par av högar" som har minst
+absolutskillnad.
+
+def facit_minimize_differences(seq: list[int]):
+    splits = facit_all_splits(seq)
+    best = splits[0]
+    best_diff = abs(sum(best[0]) - sum(best[1]))
+
+    for candidate in splits[1:]:
+        candidate_diff = abs(sum(candidate[0]) - sum(candidate[1]))
+        if candidate_diff < best_diff:
+            best_diff = candidate_diff
+            best = candidate
+
+    return best
+
+Ovan går vi genom alla kandidater och håller hela tiden reda på vilken som
+ser bäst ut av de vi har tittat på hittills. Som överkurs kan vi också
+förkorta det här radikalt om vi känner till den inbyggda funktionen min() och
+hur man anger vilket värde vi vill minimera:
+
+def facit_minimize_differences_2(seq: list[int]):
+    return min(facit_all_splits(seq), key=lambda p: abs(sum(p[0]) - sum(p[1])))
+
+Som vi säger i uppgiften:  "Att hitta alla möjliga uppdelningar av elementen
+är en kombinatorisk uppgift där man behöver testa 'alla alternativ' – alla
+sätt att dela upp godispåsarna mellan barnen. Fastna inte i fällan att på en
+gång försöka avgöra genom smarta tumregler om ett visst element borde läggas
+i seq1 eller seq2. Prova alltid båda alternativen."
+
+Det är just detta vi gör genom att gå genom alla kombinationer från
+facit_all_splits().  Ett antal lösningar försöker istället att på olika sätt
+balansera de olika högarnas storlek allteftersom högarna skapas, och det
+fungerar inte.  Hur bra tumregler man än hittar kommer man ändå alltid att
+kunna hitta heltalslistor där tumreglerna inte räcker till.
+
+Ett annat problem har varit att man kan hitta *för många* kombinationer.  En
+hög godispåsar har ingen inbördes ordning, så det spelar ingen roll om någon
+får påsarna [1,2,5] eller [2,1,5] eller [5,1,2].  Alltså är det inte
+*permutationer* vi är ute efter (olika sätt att ordna påsarna).  Med många
+påsar spelar detta mycket stor roll för hur mycket tid och minne som går åt
+-- det kan göra skillnaden mellan att skapa 1 miljon eller 1 triljon listor
+(10^18) för ett problem med 20 påsar, och 1 triljon listor kan vi inte få
+plats med i minnet.
+
+

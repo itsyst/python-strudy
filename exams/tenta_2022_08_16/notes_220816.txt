@@ -1,0 +1,32 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlämningar hade granskats.
+
+Tanken är både att ge mer information kring hur man kan tänka när man löser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstått under
+just denna tentaomgång.  Vi fokuserar då på de fel som faktiskt har uppstått,
+inte sådana som teoretiskt kunde ha uppstått, och de fall där felen tyder på
+specifika tankefel och liknande missar snarare än slumpmässiga misstag eller
+slarv.  Vid omtentor, där det är färre som går upp på tentan, blir det ofta
+också färre typfel att diskutera.
+
+Lösningsförslag kan finnas inbakade i informationen eller i en separat fil.
+Tänk på att det går att lösa uppgifterna på många olika sätt och att det inte
+automatiskt är fel bara för att en lösning ser annorlunda ut.
+
+=============================================================================
+
+Hur svår en tenta egentligen är beror på både uppgifternas svårighet,
+poängsättningen, och poänggränserna.  Detta betyder att poänggränser inte
+måste vara samma från tenta till tenta.  För denna tenta har vi följande
+betygsgränser:
+
+14p krävs för godkänt / betyg 3.
+
+20p krävs för betyg 4.
+
+24p krävs för betyg 5.
+
+=============================================================================
+
+Vid denna omtenta fanns ett fåtal deltagare och inga specifika mönster i
+de fel som uppstod. Därför skrevs inga sammanfattningar av uppgifterna.

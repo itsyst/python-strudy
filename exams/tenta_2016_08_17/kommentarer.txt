@@ -1,0 +1,61 @@
+RÃ¤ttningsmall fÃ¶r datortenta TDDD73 2016-08-17
+
+### Uppgift 1
+-0.0: Saknar doc-string, pÃ¥ senare uppgifter kommer ge avdrag
+-0.0: DÃ¥lig stil, pÃ¥ senare uppgifter kommer detta ge avdrag
+-0.0: DÃ¥ligt val av variabelnamn, pÃ¥ senare uppgifter kan detta ge avdrag
+-0.0: Print istÃ¤llet fÃ¶r return
+-0.5: Felindenterad docstring
+-0.5: klarar inte expand([], ['abc'])
+-0.5: Klarar inte expand(mem, [])
+
+Intressanta testfall som inte finns med i uppgiften:
+>>> expand([], ['abc'])
+'abc'
+
+
+### Uppgift 2
+-0.0: Saknar doc-string, pÃ¥ senare uppgifter kommer ge avdrag
+-0.0: DÃ¥ligt val av variabelnamn, pÃ¥ senare uppgifter kan detta ge avdrag
+-0.5: DÃ¥lig stil
+-0.5: Print istÃ¤llet fÃ¶r return
+-0.5: Felindenterad docstring
+-1.0: Destruktiv lÃ¶sning
+
+Intressanta testfall som inte finns med i uppgiften:
+>>> a = [1, 2, 3]
+>>> interleave_r(a, a)
+[1, 1, 2, 2, 3, 3]
+>>> a
+[1, 2, 3]
+
+
+### Uppgift 3a
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+
+### Uppgift 3b
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+
+
+### Uppgift 4
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+1p om man bara hanterar listor utan underlistor
+
+
+### Uppgift 5
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+-0.5: Returnerar pekare till interna datastrukturer
+
+
+### Uppgift 6
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil

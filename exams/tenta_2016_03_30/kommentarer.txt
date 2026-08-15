@@ -1,0 +1,61 @@
+RÃ¤ttningsmall fÃ¶r datortenta TDDD73 2016-03-30
+
+### Uppgift 1
+-0.0: Saknar doc-string, pÃ¥ senare uppgifter kommer ge avdrag
+-0.0: DÃ¥lig stil, pÃ¥ senare uppgifter kommer detta ge avdrag
+-0.0: DÃ¥ligt val av variabelnamn, pÃ¥ senare uppgifter kan detta ge avdrag
+-0.0: Print istÃ¤llet fÃ¶r return
+-0.5: Felindenterad docstring
+-1.0: Klarar inte tomma sekvensen
+-1.0: Klarar inte tvÃ¥ negativa tal i rad
+
+Intressanta testfall som inte finns med i uppgiften:
+>>> rainfall([])
+[]
+
+>>>rainfall([-1,-1])
+[]
+
+
+### Uppgift 2
+-0.0: Saknar doc-string, pÃ¥ senare uppgifter kommer ge avdrag
+-0.5: DÃ¥lig stil
+-0.5: Print istÃ¤llet fÃ¶r return
+-0.5: Hanterar inte specialfallet zip_r([1,2], [])
+-1.0: Destruktiv lÃ¶sning
+-1.0: GÃ¶r en lista runt varje tuple
+-0.5: Felindenterad docstring
+
+
+### Uppgift 3
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+-0.5: Inkluderar inte bÃ¥de i och j
+-2.0: Ignorerar i och startar alltid frÃ¥n 0
+1p om returnerar en funktion men i Ã¶vrigt inte gÃ¶r rÃ¤tt
+1p om man inte returnerar en funktion men i Ã¶vrigt gÃ¶r rÃ¤tt
+
+Intressanta testfall som inte finns med i uppgiften:
+>>> sum_if(lambda x: x*x, lambda x: x%2==1)(1,5)
+35
+
+
+### Uppgift 4
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+1p om man bara hanterar listor utan underlistor
+
+
+### Uppgift 5
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil
+-0.5: Returnerar pekare till interna datastrukturer
+
+
+### Uppgift 6
+-0.5: Saknar doc-string
+-0.5: DÃ¥ligt val av doc-string
+-0.5: DÃ¥lig stil

@@ -1,0 +1,172 @@
+
+          Datortentamen i kursen TDDD64 Programmering i Python
+
+                     onsdag 27 mars kl 14-19
+
+-----------------------------------------------------------------------------
+ Uppgift 1
+-----------------------------------------------------------------------------
+
+Skriv en funktion manhattan som givet tre tal ritar upp en slumpmässig figur
+som med lite fantasi kan tolkas som en bild av skyskrapor. De tre talen anger
+bredden (d.v.s. antalet höghus) samt minsta respektive högsta höjden på husen.
+Höghusen ska skrivas ut med tecknet '#'. Exempel:
+
+  >>> manhattan(15, 2, 8)
+          #
+       # ##
+      ## #####
+  # # ## #####
+  # # ########
+  ### ######## ##
+  ###############
+  ###############
+
+Ovanstående exempel producerar en slumpmässig höghuskontur med 15 höghus som
+är från 2 upp till 8 våningar höga. Den figur som skrivs ut ska vara orienterad
+enligt exemplet, d.v.s. marknivå längst ned.
+
+För att kunna generera slumptal måste vi först importera en modul random.
+Därefter kan vi få fram slumpmässiga heltal med hjälp av funktionen randint.
+Se följande exempel:
+
+  >>> from random import randint
+  >>> randint(10,19)
+  15
+  >>> randint(10,19)
+  12
+
+-----------------------------------------------------------------------------
+ Uppgift 2
+-----------------------------------------------------------------------------
+
+Listor i Python har en inbyggd metod insert som kan skjuta in ett element på
+en angiven position. Den funkar så här:
+
+  >>> a = ['a', 'b', 'd', 'e']
+  >>> a.insert(2, 'c')
+  >>> a
+  ['a', 'b', 'c', 'd', 'e']
+
+Vi vill nu ha en motsvarande funktion insert som fungerar på samma sätt. 
+Funktionen ska finnas i två varianter: en som arbetar rekursivt (inser_r)
+och en som arbetar iterativt (insert_i). Du får inte använda metoden insert
+för att lösa uppgiften, utan ska bearbeta listan ett element i taget. Exempel:
+
+  >>> insert_r(2, 'c', ['a', 'b', 'd', 'e'])
+  ['a', 'b', 'c', 'd', 'e']
+
+-----------------------------------------------------------------------------
+ Uppgift 3
+-----------------------------------------------------------------------------
+
+Skriv en högre ordningens funktion remover som tar en predikatsfunktion
+och en lista. Funktionen remover ska returnera en lista där alla element,
+oavsett nivå, som uppfyller predikatsfunktionen är borttagna. Resultatlistan
+ska ha samma djupstruktur som originallistan. Funktionen får inte använda
+inbyggda funktioner eller metoder som t.ex. filter eller remove, utan ska gå
+igenom listan ett element i taget. Exempel:
+
+  >>> remover(lambda x: isinstance(x, int), [1, ['b', [2], 'c'], 'd', 3])
+  [['b', [], 'c'], 'd']
+
+Skriv en funktion rem_value som med hjälp av remover tar bort alla heltal
+som ligger i ett givet intervall (inklusive gränserna). Listan kan innehålla
+även element som inte är tal. Exempel:
+
+  >>> rem_values(10, 20, [['x', 5, [15, 'y'], 20], 2, 'z', 17])
+  [['x', 5, ['y']], 2, 'z']
+
+-----------------------------------------------------------------------------
+ Uppgift 4
+-----------------------------------------------------------------------------
+
+Skriv en funktion count_level som räknar antalet element som finns på en viss
+nivå i en lista av listor. Översta nivån i listan är nivå 1. Exempel:
+
+  >>> count_level(1, ['a', 'b', ['c', 'd', 'e']])
+  2
+
+Elementen 'a' och 'b' är på nivå 1 (toppnivån).
+
+  >>> count_level(3, ['a', ['b', ['c', ['d'], 'e']]])
+  2
+
+Elementen 'c' och 'e' är på nivå 3.
+
+-----------------------------------------------------------------------------
+ Uppgift 5
+-----------------------------------------------------------------------------
+
+Vi tänker oss att vi har ett släktträd med barn, barnbarn o.s.v. som vi lagrar
+som listor i listor. Exempel:
+
+  svensson = ['Erik', ['Olle', ['Eva', 'Karin', 'Anna'],
+                               ['Lars', 'Maria'],
+                               ['Pär', 'Sofia']],
+                      'Lisa',
+                      ['Stina', ['Gunnar', 'Lasse'],
+                                'Lennart']]
+
+Detta släktträd utgår från Erik som har barnen Olle, Lisa och Stina. Olle har i
+sin tur barnen Eva, Lars och Pär. Lisa har inga barn, men Stina har barnen
+Gunnar och Lennart. I den här uppgiften antar vi för enkelhetens skull att alla
+personer har olika namn.
+
+Vi vill ha en funktion ancestors som givet en person och ett släktträd enligt
+ovan ger släktledet till en person. För Maria är det alltså Erik -> Olle ->
+Lars -> Maria, vilket ska returneras som en rak lista. Om personen i fråga
+inte finns med i trädet returneras en tom lista. Exempel:
+
+  >>> ancestors('Maria', svensson)
+  ['Erik', 'Olle', 'Lars', 'Maria']
+  >>> ancestors('Erik', svensson)
+  ['Erik']
+  >>> ancestors('Gunnar', svensson)
+  ['Erik', 'Stina', 'Gunnar']
+  >>> ancestors('Barbro', svensson)
+  []
+
+Definiera funktionen ancestors.
+
+-----------------------------------------------------------------------------
+ Uppgift 6
+-----------------------------------------------------------------------------
+
+(abstraktion)
+
+Vi har tagit fram ett paket för att hantera polynom av en variabel, t.ex:
+
+  5x^2+3x-2
+  
+För detta ändamål har vi definierat ett antal abstrakta datatyper:
+
+  polynom      består av en variabel (sträng) och en termlista
+  termlist     är en sekvens av termer lagrade i en array
+  term         består av ordning (heltal) och koefficient
+  coefficient  är i den här versionen enbart ett tal
+  variable     är en sträng som innehåller variabelns namn
+  
+I filen poly.py finns all kod som behövs. Där finns bl.a. funktionen 
+plus_poly som kan addera två polynom och funktionen print_poly som skriver
+ut polynom. Det finns två testpolynom definierade i variablerna p1 och p2.
+Prova att använda dessa funktioner:
+
+  >>> print_poly(p1)
+  -2+3x+5x^2
+  >>> print_poly(plus_poly(p1, p2))
+  4+7x+3x^3+5x^2
+  
+Vi vill nu förbättra det här matematiska paketet på ett par olika punkter.
+
+*** Deluppgift A (1,5p) ***
+
+Om man adderar polynomen 5x+3 och -5x+2 erhålls polynomet 0x+5. Vi får alltså
+en term vars koefficient är 0, helt i onödan. Modifiera koden så att sådana
+onödiga termer inte lagras i termlistan. Alla modifieringar ska följa samma
+idé som resten av koden och får inte bryta mot abstraktionen.
+
+*** Deluppgift B (3,5p) ***
+
+Inför en ny funktion mult_poly som utför multiplikation av polynom. Om det
+verkar befogat, inför gärna ytterligare primitiva funktioner.

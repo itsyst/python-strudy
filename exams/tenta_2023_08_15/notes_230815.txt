@@ -1,0 +1,273 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlÃ¤mningar hade granskats.
+
+Tanken Ã¤r bÃ¥de att ge mer information kring hur man kan tÃ¤nka nÃ¤r man lÃ¶ser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstÃ¥tt under
+just denna tentaomgÃ¥ng.  Vi fokuserar dÃ¥ pÃ¥ de fel som faktiskt har uppstÃ¥tt,
+inte sÃ¥dana som teoretiskt kunde ha uppstÃ¥tt, och de fall dÃ¤r felen tyder pÃ¥
+specifika tankefel och liknande missar snarare Ã¤n slumpmÃ¤ssiga misstag eller
+slarv.  Vid omtentor, dÃ¤r det Ã¤r fÃ¤rre som gÃ¥r upp pÃ¥ tentan, blir det ofta
+ocksÃ¥ fÃ¤rre typfel att diskutera.
+
+LÃ¶sningsfÃ¶rslag kan finnas inbakade i informationen eller i en separat fil.
+TÃ¤nk pÃ¥ att det gÃ¥r att lÃ¶sa uppgifterna pÃ¥ mÃ¥nga olika sÃ¤tt och att det inte
+automatiskt Ã¤r fel bara fÃ¶r att en lÃ¶sning ser annorlunda ut.
+
+=============================================================================
+
+Hur svÃ¥r en tenta egentligen Ã¤r beror pÃ¥ bÃ¥de uppgifternas svÃ¥righet,
+poÃ¤ngsÃ¤ttningen, och poÃ¤nggrÃ¤nserna.  Detta betyder att poÃ¤nggrÃ¤nser inte
+mÃ¥ste vara samma frÃ¥n tenta till tenta.  FÃ¶r denna tenta har vi fÃ¶ljande
+betygsgrÃ¤nser:
+
+13.0p krÃ¤vs fÃ¶r godkÃ¤nt / betyg 3.
+
+16.5p krÃ¤vs fÃ¶r betyg 4.
+
+21.5p krÃ¤vs fÃ¶r betyg 5.
+
+Maximal poÃ¤ng Ã¤r 28.0.
+
+=============================================================================
+AllmÃ¤n information om uppgift 1
+=============================================================================
+
+LÃ¶sningsfÃ¶rslag:
+
+def facit_find_least_close(seq1: list[int], seq2: list[int]) -> list[int]:
+    result = []
+    for value in seq1:
+        # seq2 has at least one number, according to the description.
+        farthest = seq2[0]
+        distance = abs(value - farthest)
+        # Check the other numbers -- are they farther away?
+        for other in seq2[1:]:
+            newdist = abs(value - other)
+            if newdist > distance or (newdist == distance and value > farthest):
+                farthest = other
+                distance = newdist
+        result.append(farthest)
+    return result
+
+
+def facit_find_least_close_2(seq1: list[int], seq2: list[int]) -> list[int]:
+    res = []
+    for e in seq1:
+        best_match = seq2[0]
+        for m in seq2[1:]:
+            if abs(e - m) > abs(e - best_match) or (abs(e - m) == abs(e - best_match) and m > best_match):
+                best_match = m
+        res.append(best_match)
+    return res
+
+Det finns ocksÃ¥ alternativa varianter som drar nytta av att det vÃ¤rde som Ã¤r
+lÃ¤ngst bort frÃ¥n ett annat mÃ¥ste vara antingen det stÃ¶rsta eller det minsta.
+
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 2
+=============================================================================
+
+LÃ¶sningsfÃ¶rslag:
+
+def facit_reverse_pairs(seq: list):
+    result = []
+
+    for pos in range(0, len(seq), 2):
+        if pos + 1 < len(seq):
+            result.append(seq[pos + 1])
+        result.append(seq[pos])
+
+    return result
+
+
+def facit_reverse_pairs_r(seq: list):
+    if not seq:
+        return []
+    elif len(seq) == 1:
+        return seq
+    else:
+        return [seq[1], seq[0]] + facit_reverse_pairs_r(seq[2:])
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 3
+=============================================================================
+
+LÃ¶sningsfÃ¶rslag:
+
+def facit_expand(mem: list[str], msg: list) -> list:
+    result = []
+
+    if not msg:
+        return result
+
+    for element in msg:
+        if isinstance(element, list):
+            result.append(facit_expand(mem, element))
+        elif isinstance(element, str):
+            result.append(element)
+        else:
+            result.append(mem[element])
+
+    return result
+
+
+def facit_expand_concat(mem: list[str], msg: list) -> list:
+    result = []
+
+    if not msg:
+        return result
+
+    # Need to keep track of the difference between not having seen any
+    # strings, and having seen the empty string. Therefore we can't
+    # represent "nothing accumulated yet" as the empty string.
+    # Let's use None instead.
+    accumulated = None
+
+    for element in msg:
+        if isinstance(element, list):
+            # We may have accumulated something already.  If so, let's
+            # add that string to the result and reset the accumulation.
+            if accumulated is not None:
+                result.append(accumulated)
+            accumulated = None
+            # Expand recursively and add the expanded version.
+            result.append(facit_expand_concat(mem, element))
+        elif isinstance(element, str):
+            if accumulated is None:
+                # Nothing found before => set
+                accumulated = element
+            else:
+                # Something found before => append
+                accumulated += element
+        else:
+            if accumulated is None:
+                accumulated = mem[element]
+            else:
+                accumulated += mem[element]
+
+    # End of elements, but we may have accumulated a string that we haven't added yet.
+    if accumulated is not None:
+        result.append(accumulated)
+
+    return result
+
+
+def facit_expand_concat_2(mem: list[str], msg: list) -> list:
+    result = []
+    for index in range(len(msg)):
+        elem = msg[index]
+        if isinstance(elem, list):
+            # Recursion
+            result.append(facit_expand_concat_2(mem, elem))
+        elif isinstance(elem, int):
+            result.append(mem[elem])
+        elif result and isinstance(result[-1], str):
+            # Concatenate to the previous string
+            if isinstance(elem, int):
+                word = mem[elem]
+            else:
+                word = elem
+            result[-1] += word
+        else:
+            # New string to append
+            result.append(elem)
+    return result
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 4
+=============================================================================
+
+LÃ¶sningsfÃ¶rslag:
+
+def facit_pred_comp(p, t, f):
+    return lambda x: t(x) if p(x) else f(x)
+
+
+facit_safe_div = facit_pred_comp(lambda div: div[1] != 0,
+lambda div: div[0] / div[1],                                  lambda div: 0)
+
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 5
+=============================================================================
+
+I den hÃ¤r uppgiften ville vi testa implementation av en egen datatyp,
+liknande det som har gjorts i en av senaste Ã¥rets labbar.  Vi testar ocksÃ¥
+fÃ¶rstÃ¥else fÃ¶r existerande datatyper samt grundlÃ¤ggande programmering.
+Uppgiften Ã¤r uppdelad i mÃ¥nga delar fÃ¶r att man ska kunna fÃ¥ delpoÃ¤ng.
+
+LÃ¶sningsfÃ¶rslag:
+
+def facit_new_listdict():
+    return ListDict([])
+
+
+def facit_listdict_put(ld: ListDict, key, value):
+    for element in ld.pairs:
+        if element.key == key:
+            ld.pairs.remove(element)
+            ld.pairs.append(KeyValue(key, value))
+            return
+
+    # Didn't exist
+    ld.pairs.append(KeyValue(key, value))
+
+
+def facit_listdict_get(ld: ListDict, key, default):
+    for element in ld.pairs:
+        if element.key == key:
+            return element.value
+
+    return default
+
+
+def facit_listdict_delete(ld: ListDict, key):
+    for index, element in enumerate(ld.pairs):
+        if element.key == key:
+            del ld.pairs[index]
+            return True
+
+    return False
+
+
+def facit_listdict_contains(ld: ListDict, key):
+    for element in ld.pairs:
+        if element.key == key:
+            return True
+
+    return False
+
+
+def facit_listdict_values(ld: ListDict):
+    return set(element.value for element in ld.pairs)
+
+
+def facit_listdict_from(map):
+    ld = facit_new_listdict()
+    for key, value in map.items():
+        facit_listdict_put(ld, key, value)
+    return ld
+
+
+def facit_listdict_update(ld_to: ListDict, ld_from: ListDict):
+    for element in ld_from.pairs:
+        facit_listdict_put(ld_to, element.key, element.value)
+
+
+def facit_listdict_add_value(ld: ListDict, key, value):
+    for element in ld.pairs:
+        if element.key == key:
+            if isinstance(element.value, list):
+                element.value.append(value)
+                return
+            else:
+                raise TypeError
+
+    # Didn't find it
+    facit_listdict_put(ld, key, value)
+

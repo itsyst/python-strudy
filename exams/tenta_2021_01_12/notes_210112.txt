@@ -1,0 +1,255 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlämningar hade granskats.
+
+Tanken är både att ge mer information kring hur man kan tänka när man löser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstått under
+just denna tentaomgång.  Vi fokuserar då på de fel som faktiskt har uppstått,
+inte sådana som teoretiskt kunde ha uppstått, och de fall där felen tyder på
+specifika tankefel och liknande missar snarare än slumpmässiga misstag eller
+slarv.  Vid omtentor, där det är färre som går upp på tentan, blir det ofta
+också färre typfel att diskutera.
+
+Lösningsförslag kan finnas inbakade i informationen eller i en separat fil.
+Tänk på att det går att lösa uppgifterna på många olika sätt och att det inte
+automatiskt är fel bara för att en lösning ser annorlunda ut.
+
+=============================================================================
+Allmän information om uppgift 1
+=============================================================================
+
+I den här uppgiften ville vi testa grundläggande programmering, inklusive
+hantering av loopar, listor och till viss del strängar.  Samtidigt handlar
+det också om att läsa instruktionerna och följa med i de villkor som ges.
+
+De flesta problemen har varit vid w==0 eller h==0, två fall som beskrivs
+tydligt i inledningen; till exempel ska det alltid finnas h rader, även om
+w==0.  Några problem har uppstått när inside_oval inte alls har använts (det
+står att inside_oval SKA användas!), och när specifika former har hårdkodats
+istället för att använda inside_oval:s formler för att skapa korrekta ovaler.
+Exemplen hade visserligen '.' enbart i hörnen, men kvadrater med enskilda
+pixlar avhuggna fungerar inte för större storlekar.
+
+I den ursprungliga uppgiften var två argument till inside_oval omkastade.
+Information om det gick ut klockan 08:42 och om någon fortfarande hade fel ordning
+har vi självklart inte gjort några avdrag för det.
+
+Ny utskickad version var:
+
+  def inside_oval(width, height, col, row):
+      row = row - height / 2 + 0.5
+      col = col - width / 2 + 0.5
+      return row * row / (height * height) + col * col / (width * width) <= 0.25
+
+=============================================================================
+Allmän information om uppgift 2
+=============================================================================
+
+I den här uppgiften kan vi se att många har gjort arbetet svårare genom att
+försöka hålla registren oinitialiserade från början, och sedan
+specialbehandla register som ännu inte är satta genom att titta efter om
+registren faktiskt finns med i en dictionary eller inte.  Det har gjort
+lösningarna MYCKET mer komplicerade eftersom det finns väldigt många platser
+där man måste vara helt konsistent med att kontrollera alla lästa värden på
+rätt sätt.  Resultatet är många olika problem, som krascher när man glömmer
+att titta på registret har ett explicit värde, felaktiga resultat när man
+struntar i operationer som skulle använda eller modifiera ett register som
+inte hade modifierats tidigare, och så vidare.  Ibland gäller det för alla
+instruktioner, och ibland fungerar icke modifierade register med vissa
+instruktioner (som ADD) men inte andra (som MUL).
+
+Det var bland annat därför vi bara hade ett litet antal fördefinierade
+register istället för att ha godtyckliga variabelnamn, och uttryckligen skrev
+att "När man startar ett PyAssm-program körs ska varje register sättas till
+värdet 0 (heltal noll)".  Om man följer detta och skapar en dictionary med
+{"A": 0, ...} krävs det bara ett par enkla rader, och sedan kan man helt
+ignorera möjligheten att något register skulle sakna värde.  (Vi kunde så
+klart ha skrivit det ännu tydligare, men det vore att lösa problemen åt
+er... och det är så klart *tillåtet* att låta registren vara implicit 0 till
+de sätts, så länge funktionen sedan beter sig korrekt.)
+
+Ett alternativ, om man trots allt inte vill följa den instruktionen utan vill
+gå sin egen väg och initialisera variablerna när de behövs, är att
+genomgående använda dict.get(nyckel, defaultvärde) istället för dict[nyckel]
+-- alltså registers.get(regname, 0) istället för registers[0].  Då slipper
+man att uttryckligen kontrollera om nyckeln finns och får istället
+defaultvärdet om nyckeln saknas.
+
+Ja, och så gäller det ju att få alfabetet rätt också.  Ofta saknas W och i
+ett antal fall saknas U eller Y eller I, vilket kan ge många följdproblem av
+olika komplexitet beroende på hur resten av implementationen ser ut.  Vi har
+inte dragit av några poäng för det, eftersom det inte alls var uppgiftens
+fokus.
+
+Några har behållt tillstånd (variabelvärden) mellan olika körningar av
+programmet, vilket de generella instruktionerna uttryckligen säger att man
+ska undvika.
+
+I 2b är det ett antal som inte har implementerat JNE eller har en icke
+fungerande version av just den instruktionen.  Här ser man behovet av att
+skapa egna tester!  Ibland kan det också hända att man har implementerat hopp
+genom att klippa av programmet på den nya positionen och sedan börjat utföra
+det avklippta programmet från starten... så om man hoppar fram till position
+10 har instruktionerna 0-9 försvunnit, och man har skurit av alla möjligheter
+att senare hoppa till instruktion 4.  Det finns fler fel, men för många olika
+typer för att ge en hel översikt.  Samma gäller för många olika feltyper i
+2c.
+
+=============================================================================
+Allmän information om uppgift 3
+=============================================================================
+
+Det är många som har implementerat treeval med hjälp av dubbelrekursion.  Det
+är inget tvång -- man kan använda godtycklig lösningsmetod, inklusive att
+rekursera nedåt i trädet medan man itererar över alla barn som finns på den
+nuvarande nivån.
+
+När man använder dubbelrekursion behöver man tänka på att *all* rekursion
+behöver skicka med ett *väldefinierat* och *otvetydigt* delproblem i det
+rekursiva anropet.  Om man börjar med treeval([12, [34], [56], [78]]) och
+rekurserar ner med treeval(tree[1:]) == treeval([[34],[56],[78]]) kan man så
+klart känna igen att första elementet är en lista och att det då ska ske en
+addition.  Men om man även går från treeval(["*", [34], [56], [78]]) och
+rekurserar ner till treeval(tree[2:]) == treeval([[56],[78]])...  Hur ska man
+då veta att man är inne i en multiplikation?  I så fall kan man istället
+rekursera ned med treeval(["*"] + tree[2:]) == treeval(["*", [56],[78]]) som
+faktiskt *anger* att det är en multiplikation.  Då blir delproblemen
+välformade och tydliga.  I många lösningar har man istället "tappat bort
+sig" genom att det är oklart vad rekursionen egentligen ska göra.
+
+Detta visar också på vikten att hitta på egna testfall.  Det står att en nod
+är en lista med minst 1 element, alltså godtyckligt många.  Tänk då på att
+testa med många element så märker du om du har råkat lägga in onödiga
+begränsningar.
+
+Ett annat mycket vanligt fel är problem med flyttal (float).  Här har vi
+faktiskt skrivit uttryckligen att nodvärdet "kan vara ett godtyckligt
+Python-värde av godtycklig typ", och det inkluderar definitivt flyttal.  Vi
+hade även kunnat testa med andra typer som t.ex. komplexa tal... så ett tips
+till nästa gång: Testa då inte uttryckligen om det är en specifik typ om du
+kan undvika det, och om du måste testa typ, kolla då att du testar rätt ("är
+heltal" vs "är inte en lista" vs något annat).  I det här fallet räcker det
+att titta på var elementet finns: "Första elementet i en nod är ett
+nodvärde".
+
+Fler fel inkluderar hårdkodning till ett maximalt antal barn (det står inte
+att det finns någon begränsning: "kvarvarande element i noden är nodens
+barn"), och ett stort antal "unika" problem.
+
+I 3b handlar problemen ofta om ett antagande att inga operatorer finns under
+ett "***".  Någon sådan garanti finns inte: Vi har bara sagt att nodvärdet
+"***" specialbehandlas genom att man multiplicerar i alla avkomlingar, "ÄVEN
+i sådana noder där trädvärdet annars hade beräknats med addition".  Det kan
+alltså BÅDE finnas avkomlingar där man annars hade använt addition OCH
+avkomlingar där man annars INTE hade använt addition, dvs. sådana där man
+hade använt multiplikation -- för att nodvärdet var "*".
+
+I vissa fall tolkas också 0 som tomma listor, eftersom man rekurserar ner
+ända till att tree blir ett enskilt element men samtidigt använder "not tree"
+för att hitta tomma listor... och "not 0" är sant, liksom "not set()" och
+"not dict()" och många andra varianter.  Använd
+"variabel_som_kanske_är_en_lista == []" för att testa tomhet i listor om du
+inte är 100% säker på att variabelns värde faktiskt *är* en lista.
+
+=============================================================================
+Allmän information om uppgift 4
+=============================================================================
+
+I denna uppgift blir det relativt ofta fel när rutnätet innehåller 'falska
+element' som 0, (), {} eller False.  Detta kan t.ex. hända om man tittar
+efter 'not seq' istället för att se om det verkligen är en tom lista.
+
+Det finns också ett antal lösningar där man itererar med "for row in grid",
+men sedan använder "grid.index(row)" för att hitta var man var någonstans.
+Det fungerar INTE om en grid kan innehålla flera likadana rader!  Iterera med
+range/index, eller "for index, row in enumerate(grid)", för att vara säker på
+att du verkligen vet vilket radnummer du tittar på.
+
+I 4a kan man få fel i de reverserade raderna genom att man tittar om "row[i]
+is None" när man ska lägga till row[-i-1], eller liknande -- olika
+positioner.  Här gäller det att hålla reda på vilka element man tittar på,
+och kanske ha några fler testfall.  I 4b/4c kan motsvarande fel inträffa när
+man tittar om elementet uppfyller pred.
+
+
+4b: Detta ger bara 1 poäng eftersom den enda skillnaden mot 4a är att man ska
+använda ett predikat istället för att filtrera bort None.  Om inte predikatet
+används korrekt är det alltså svårt att få någon poäng här.
+
+Notera alltså att man INTE automatiskt ska filtrera bort None i 4b eller 4c.
+4b ska till exempel "returnera en icke nästlad lista på alla element i grid
+-- i den givna ordningen -- som uppfyller predikatfunktionen pred" -- så
+uppfyller ett element pred får man inte ta bort det.
+
+
+I 4c har vi fem exempel, men alla använder predikatet "lambda x: True".  Här,
+i c-uppgiften, är det upp till er att följa instruktionerna om fler tester
+och att t.ex. testa med andra predikat -- ett relativt enkelt sätt att
+återanvända de angivna testerna men se att t.ex. enbart udda tal kommer med i
+resultatet.  Ett alternativt predikat finns i 4b och fler alternativ går lätt
+att hitta på.
+
+I 4c är huvuduppgiften just att hålla reda på alternerande nivåer, med
+exempel och förklaringar givna i texten.  Att traversera ett regelbundet
+2D-rutnät görs redan i 4A, och användning av predikat sker i 4B, så om de
+alternerande nivåerna inte blir rätt har man missat hela eller nästan hela
+uppgiften.
+
+=============================================================================
+Allmän information om uppgift 5
+=============================================================================
+
+Uppgift 5 inleds med ett antal fakta som gäller för delsekvenser i allmänhet,
+alltså både för 5a och 5b.  Som det står där handlar det om att "alla element
+i en sekvens subseq OCKSÅ FINNS i SAMMA ORDNING i en längre sekvens seq, där
+YTTERLIGARE element KAN vara infogade mellan dem."
+
+Alltså måste alla element i sekvensen subseq faktiskt finnas i seq.  I 5a
+sägs att man ska hitta indexen där de finns, och att om detta inte går, ska
+None returneras.  Ändå finns en hel del implementationer som returnerar
+listor (vilket indikerar att en lösning finns) trots att element i subseq
+helt och hållet saknas i seq.
+
+De måste också finnas i *samma ordning*.  Ändå returnerar många svar trots
+att elementen inte alls finns i samma ordning, som där subseq=[1,3,2] och seq
+är [1,2,3].
+
+Det är också relativt vanligt att man inte hittar någon lösning, trots att en
+existerar.
+
+
+I uppgift 5b har vi fått in många implementationer som är betydligt mer
+komplicerade än vad som egentligen krävs, med försök att hitta platser där
+flera (men kanske inte alla) element kan hittas inom ett avstånd av maxdist,
+mer eller mindre komplicerade strategier för att välja element som är nära
+eller långt bort från varandra, och så vidare.
+
+Ett bra tankesätt i en funktion av den här typen är egentligen betydligt
+enklare: För varje element i sekvensen, (A) SKA det elementet vara med i
+lösningen, eller (B) ska det INTE vara med i lösningen?  I varje steg har man
+alltså två alternativ, och varje alternativ leder till ett rekursivt anrop
+där man provar om/hur man kan hitta en lösning för resten av problemet om man
+i detta steg valde alternativ A respektive om man i detta steg valde
+alternativ B -- en dubbelrekursion.
+
+Här vill vi påminna om att det inte räcker att lämna in en implementation som
+har "likheter" med en korrekt implementation.  Om en implementation tydligt
+(genom sin kod och *dokumentation*) demonstrerar en stor förståelse för
+problemet, men har en eller ett par tydligt identifierbara misstag, kan man
+få poäng på uppgiften men avdrag för problemen.  Om en implementation *inte*
+tydligt demonstrerar och dokumenterar en rimlig tankegång, får man med stor
+sannolikhet 0 poäng på uppgiften.  Det handlar alltså inte bara om att man
+hade en rimlig tankegång i huvudet utan också om att den syns i klar och
+tydlig och väldokumenterad kod.  Som det står i instruktionerna: ...lösningen
+ska vara välstrukturerad och tillräckligt väldokumenterad för att en
+granskare *enkelt* ska förstå hur lösningen fungerar och varför den ser ut
+som den gör.
+
+
+En av testerna för 5b adderades till tentan i ett sent stadium för att ge er
+ett tydligt exempel där första elementet i subseq skulle matchas mot ett
+*semare* element i seq.  Facit blev då fel: "find_with_max_distance([1,7,3],
+[9,9,9,9,9,9,9,1,5,1,2,7,8,9,3,3], 3) == [2,4,7]" skulle vara
+"find_with_max_distance([1,7,3], [9,9,9,9,9,9,9,1,5,1,2,7,8,9,3,3], 3) ==
+[9,11,14]" istället.  Detta fel var förhoppningsvis uppenbart (värdet 1 finns
+ju inte på position 2 i den långa sekvensen), och en korrigering skickades ut
+klockan 09:02.

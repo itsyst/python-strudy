@@ -1,0 +1,252 @@
+
+          Datortentamen i kursen TDDD64 Programmering i Python
+
+                     onsdag 21 augusti kl 8-13
+
+-----------------------------------------------------------------------------
+ Uppgift 1
+-----------------------------------------------------------------------------
+
+Skriv en funktion print_calendar som skriver ut en månadskalender på 
+traditionellt sätt (se exempel nedan). Funktionen tar två parametrar. 
+Den första anger antalet dagar i månaden och den andra anger vilken veckodag
+som är den första i månaden (0 = måndag, 1 = tisdag, o.s.v.). Följande 
+exempel visar utskriften för en månad med 30 dagar där den första i månaden 
+är en onsdag:
+
+  >>> print_calendar(30, 2)
+          1  2  3  4  5
+    6  7  8  9 10 11 12
+   13 14 15 16 17 18 19
+   20 21 22 23 24 25 26
+   27 28 29 30
+ 
+Utskriften av kalenderna ska vara formatterad exakt som i exemplet, d.v.s.
+varje datum ska ta upp exakt tre tecken där mellanslag används som utfyllnad
+och talet är högerjusterat inom fältet. Kalenderna ska avslutas med en ny
+rad, så att inte Python-prompten dyker upp omedelbart efter sista dagen.
+
+-----------------------------------------------------------------------------
+ Uppgift 2
+-----------------------------------------------------------------------------
+
+Skriv en funktion interval som tar en lista med tupler
+
+  [(s1, e1), (s2, e2), ..., (sN, eN)]
+
+Alla element s[i] och e[i] är heltal och de kommer i stigande ordning, d.v.s.
+det gäller alltid att s[k] < e[k] och att e[k] <= s[k+1]. Funktionen interval
+ska beräkna mellanrummen mellan de angivna intervallen. Detta illustreras
+bättre med följande exempel:
+
+  >>> interval([(1, 3), (5, 8), (10, 12)])
+  [(3, 5), (8, 10)]
+
+I indatat har vi en lista med intervallen 1-3, 5-8 och 10-12. Som resultat
+får vi en lista med mellanrummen, d.v.s. 3-5 och 8-10. Ändpunkterna ingår
+i intervallen.
+
+Funktionen ska finnas i två varianter: en rekursiv som heter interval_r
+och en iterativ som heter interval_i.
+
+-----------------------------------------------------------------------------
+ Uppgift 3
+-----------------------------------------------------------------------------
+
+Skriv en funktion is_anagram som testar om en rak lista är ett anagram av
+en annan rak lista, d.v.s. om de innehåller exakt samma element men inte
+nödvändigtvis i samma ordning. Funktionen ska finnas i två varianter: en som
+arbetar rekursivt (is_anagram_r) och en som arbetar iterativt (is_anagram_i).
+
+  >>> is_anagram(['p', 'e', 't', 'e', 'r'], ['r', 'e', 'e', 'p', 't'])
+  True
+  >>> is_anagram(['p', 'e', 't', 'e', 'r'], ['r', 'e', 'e', 'p', 'q'])
+  False
+  >>> is_anagram([], [])
+  True
+
+-----------------------------------------------------------------------------
+ Uppgift 4
+-----------------------------------------------------------------------------
+
+Skriv en högre ordningens funktion analyze som tar en rak lista och en
+funktion. Funktionen analyze ska avgöra om den givna lista uppfyller ett
+mönster som specificeras av den givna funktionen (som är tänkt att ge nästa
+element i listan). En lista med noll eller ett element uppfyller vilket
+mönster som helst. Funktionen analyze ska returnera ett sanningsvärde.
+Exempel:
+
+  >>> analyze([3, 4, 5, 6, 7], lambda x: x+1)
+  True
+  >>> analyze([1, 5, 17, 53, 161], lambda x: 2+3*x)
+  True
+  >>> analyze([[1, 2, 3], [2, 3], [3], []], lambda x: x[1:])
+  True
+
+Definiera en funktion double_odd som med hjälp av analyze kan analysera
+en lista med tal. Mönstret definieras så att om ett tal är jämnt ska det 
+följas av nästa tal, medan om det är udda ska nästa vara dubblerat. Exempel:
+
+  >>> double_odd([1, 2, 3, 6, 7, 14, 15, 30, 31, 62, 63])
+  True
+
+-----------------------------------------------------------------------------
+ Uppgift 5
+-----------------------------------------------------------------------------
+
+Följande skiss är en representation av ett binärt träd med namn på noderna
+och avstånd på bågarna. Vi tänker oss att strecken mellan noderna är pilar
+riktade nedåt i figuren.
+
+                 A
+                / \
+              7/   \4
+              /     \
+             /       \
+            B         C
+           / \       / \
+         3/   \2   8/   \3
+         D     E   F     G 
+              / \
+            1/   \4
+            H     I
+
+Vi vill ha en funktion connected som i det binära trädet undersöker om det
+finns en väg från roten (A i vårt exempel) till ett löv (någon av D, H, I,
+F eller G i vårt exempel) och som dessutom har en viss total längd. Om så
+är fallet ska funktionen connected returnera denna väg (den första bästa
+om det finns flera alternativ). Om det inte finns en väg alls, eller om
+vägarna har fel längd ska False returneras.
+
+Vi representerar det binära trädet på följande sätt:
+
+- ett löv är en sträng innehållande nodens namn
+- en inre nod är en lista på följande form:
+  [nodnamn, avstånd_vänster, vänster_delträd, avstånd_höger, höger_delträd]
+  
+Ovanstående träd kan alltså representeras som:
+
+  tree1 = ['a', 7, ['b', 3, 'd', 2, ['e', 1, 'h', 4, 'i']], 4, ['c', 8, 'f', 3, 'g']]
+
+För att kunna hantera den här typen av binära träd inför vi ett antal 
+primitiva funktioner (se filen tree.py):
+
+  def is_leaf(node):
+      return not isinstance(node, list)
+    
+  def node_name(node):
+      return node[0]
+   
+  def left_tree(node):
+      return node[2]
+    
+  def right_tree(node):
+      return node[4]
+    
+  def left_distance(node):
+      return node[1]
+    
+  def right_distance(node):
+      return node[3]
+    
+Vi vill att funktionen connected ska fungera så här (för vårt exempel ovan):
+
+  >>> connected(10, tree1)
+  ['a', 'b', 'd']
+  >>> connected(13, tree1)
+  ['a', 'b', 'e', 'i']
+  >>> connected(8, tree1)
+  False
+
+-----------------------------------------------------------------------------
+ Uppgift 6
+-----------------------------------------------------------------------------
+
+En metod att kodifiera symboler, exempelvis bokstäver till bitsträngar, är 
+Huffman-kodning. Den används då man önskar få korta koder av vanliga symboler,
+t.ex. så att A kodifieras med 0 men Z med 10110110. Känner man frekvensen på 
+sina symboler finns en metod att skapa en sådan entydig kod. I denna uppgift
+utgår vi från att Huffman-koden redan är skapad. Vi ska dock ta fram funktioner
+som kan använda den. Som exempel ska vi använda följande kod:
+
+  A 0     C 1101   E 1011   G 1001
+  B 111   D 1100   F 1010   H 1000
+  
+Meddelandet BACADAEAFH kodifieras som 111011010110001011010101000 och delar
+man upp koden i grupper är det lättare att se kodifieringen:
+
+  111 0 1101 0 1100 0 1011 0 1010 1000
+  B   A C    A D    A E    A F    H
+  
+Koden är så konstruerad att man kan ta en kodifierad bitsträng och avkoda den.
+Tar man exemplet ovan bit för bit ser man att koden funkar så att det inte finns
+någon symbol för 1, inte heller för 11, utan först för 111, som översätts till B.
+Fortsätter vi sedan kommer 0 som motsvarar A o.s.v. Kontrollera gärna själv med
+små exempel så att du är övertygad om att koden är entydig.
+
+Kodtabellen för Huffmankod brukar struktureras som ett träd, ett s.k. Huffman-träd.
+Varje inre nod i trädet har information om alla symboler som finns i vänster delträd
+(oavsett nivå) och alla symboler i höger delträd (oavsett nivå), samt givetvis även
+vänster och höger delträd. Att varje nod känner till alla symboler under sig är
+till för att snabba upp kodningen. Huffmankoden ovan kan lagras i nedanstående träd:
+               
+                #
+            (A)/ \(BCDEFGH)
+              /   \___
+             /        \
+            A          #
+                (EFGH)/ \(BCD)
+              _______/   \_______
+             /                   \
+            #                     #
+       (GH)/ \(EF)           (CD)/ \(B)
+        __/   \__               /   \
+       /         \             /     B
+      #           #           #
+  (H)/ \(G)   (F)/ \(E)   (D)/ \(C)
+    /   \       /   \       /   \
+   H     G     F     E     D     C
+   
+Varje gren åt vänster i trädet representerar en nolla och varje gren åt höger
+representerar en etta. Koden 111 innebär tre steg åt höger, och på denna 
+position i trädet hittar vi mycket riktigt lövet B. Tecknet H får man genom att
+gå från toppen först till höger och sedan till vänster tre gånger, med andra
+ord kodifieringen 1000.
+
+För avkodningen tar man hela bitsekvensen. Om första biten är noll går man
+till vänster, om den är ett går man till höger. När man på detta sätt kommer
+till en slutnod har man hittat en kodifierad symbol. Denna skrivs ut eller
+sparas, och man börjar om från toppen av trädet igen.
+
+För att hantera allt detta inför vi ett antal olika abstrakta datatyper:
+
+- HUFFMAN TREE kan vara antingen ett löv (en SYMBOL) eller en inre nod
+  som innehåller <SYMBOl SEQUENCE, SYMBOL SEQUENCE, HUFFMAN TREE, HUFFMAN TREE>.
+
+- SYMBOL SEQUENCE är en sekvens av objekt av datatypen SYMBOL.
+
+- SYMBOL är en primitiv datatyp som kan lagra alla symboler som ska kodifieras.
+
+- BIT SEQUENCE är en sekvens av binära tal, d.v.s. 0 eller 1.
+
+Löven i trädet representeras som strängar med endast ett tecken. De inre
+noderna i ett HUFFMAN TREE representeras som listor med fyra element:
+först två SYMBOL SEQUENCE som innehåller alla symboler som finns i vänster
+respektive höger delträd, därefter två HUFFMAN TREE som utgör grenarna.
+
+BIT SEQUENCE representeras som en lista av ettor och nollor.
+
+I filen huffman_s.py finns en halvfärdig implementation. Bland annat finns
+en funktion decode som överför en BIT SEQUENCE till en SYMBOL SEQUENCE.
+Komplettera gärna med egna primitiver om du anser att det behövs.
+
+a) I funktionen decode_one har kod utelämnats för fallet då den givna
+bitsekvensen tagit slut. Detta avsnitt måste även ta hand om fallet att
+bitsekvensen avslutas felaktigt. Bitsekvensen 011 genererar först A,
+i vårt exempel ovan, men koden 11 är ofullständig. Alltså bör någon form
+av fel signaleras.
+
+b) Skriv en funktion encode som tar en symbolföljd och ett Huffmanträd
+och kodifierar symbolföljden till en bitsekvens, d.v.s. motsatsen till
+decode. Lösningen ska vara abstrakt, men får gärna delas upp i flera
+funktioner om det är motiverat. Komplettera med de primitiver som behövs.

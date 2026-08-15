@@ -1,0 +1,323 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlämningar hade granskats.
+
+Tanken är både att ge mer information kring hur man kan tänka när man löser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstått under
+just denna tentaomgång.  Vi fokuserar då på de fel som faktiskt har uppstått,
+inte sådana som teoretiskt kunde ha uppstått, och de fall där felen tyder på
+specifika tankefel och liknande missar snarare än slumpmässiga misstag eller
+slarv.  Vid omtentor, där det är färre som går upp på tentan, blir det ofta
+också färre typfel att diskutera.
+
+Lösningsförslag kan finnas inbakade i informationen eller i en separat fil.
+Tänk på att det går att lösa uppgifterna på många olika sätt och att det inte
+automatiskt är fel bara för att en lösning ser annorlunda ut.
+
+=============================================================================
+
+Hur svår en tenta egentligen är beror på både uppgifternas svårighet,
+poängsättningen, och poänggränserna.  Detta betyder att poänggränser inte
+måste vara samma från tenta till tenta.  För denna tenta har vi följande
+betygsgränser:
+
+15p krävs för godkänt / betyg 3.
+
+21p krävs för betyg 4.
+
+26p krävs för betyg 5.
+
+Maximalt antal poäng var 33, till skillnad från de flesta tidigare tentor
+som kunde ge totalt 30 poäng.
+
+=============================================================================
+Allmän information om uppgift 1
+=============================================================================
+
+Detta var en inledande uppgift som testar grundläggande programmering i
+Python.
+
+De flesta har klarat av uppgiften helt och hållet.  Det finns några olika
+feltyper som att lösningen t.ex. misslyckas när seq är tom, när sista ordet
+har en första bokstav som inte användes av de tidigare orden, när det finns
+flera ord som börjar på samma tecken.  Ingen av feltyperna var dock särskilt
+vanlig.
+
+
+
+=============================================================================
+Allmän information om uppgift 2
+=============================================================================
+
+Detta är en typ av uppgift som vi ofta har med på tentorna, där man ska lösa
+ett problem både iterativt och rekursivt.  (Rättare sagt, det är OK att lösa
+det enbart rekursivt, även i 2a -- men man kan få delpoäng för en iterativ
+lösning även om man inte får till den rekursiva som man vill.)
+
+Uppgift 2a har generellt sett gått ganska bra.  Många av de problem vi kan se
+uppstår på grund av hanteringen av nollor.  Till exempel kan det bli fel för
+alla nollor, för nollor i början eller slutet av sizes, för *dubbla* nollor i
+början eller slutet, och så vidare. Det kan också bli fel när det finns fler
+siffror i sizes än element i seq, för att man tänker att detta aldrig kan ge
+en lösning -- men om sizes=="00012" behöver vi bara 3 element trots att det
+finns 5 siffror.  I ett par fel blev det fel om elementen i seq "tog slut"
+efter att man hade hanterat en nolla i sizes, t.ex. för att lösningen var
+rekursiv, hade en separat gren för att hantera nollor, och glömde att ta hand
+om returvärdet (None,None) i just den grenen.
+
+Någon lösning använde index() för att hitta hur långt man har kommit i seq,
+vilket inte fungerar när seq innehåller samma element flera gånger.
+
+Det fanns också ett antal inlämningar som inte alls kunde köras pga felaktig
+indentering, felaktig kod kvarlämnad i filen med mera.  Som vi har sagt i
+instruktionerna ger detta ett poängavdrag.
+
+I uppgift 2b såg vi lite fler problem.  Framförallt var det vanligt med
+problem när sizes hade en nolla på slutet, t.ex. för att man hade ett basfall
+som täckte när *seq* "tog slut" istället för när *sizes* tog slut.  Detta
+inträffade i 24 fall, och eftersom det både är fel och relaterar till något
+vi påpekade i tentan (att nollor kan finnas var som helst) måste vi göra ett
+poängavdrag.  Om resten är korrekt blir avdraget bara -0.5p, alltså det
+minsta möjliga.
+
+Samma noll-problem som uppträdde i 2a uppträdde även här, tillsammans med
+några nya. Exempelvis kudne det bli fel om det finns för många element *och*
+sizes slutar med siffran 0, eller om det finns fel antal element i seq OCH
+det bara finns en siffra i sizes,
+
+Ett annat vanligt problem var att split_lists_rec() inte anropade sig själv
+utan split_lists(). Vissa (9) hade även gjort split_lists() rekursiv, och då
+gav detta i sig inget avdrag eftersom helheten ändå blev rekursiv.   Några
+hade anropat en iterativ split_lists() vilket i första steget gav ett litet
+poängavdrag.  Sedan åtgärdades detta och funktionen testades igen, vilket kan
+ha lett till att nya problem upptäcktes eftersom den rekursiva
+implementationen egentligen inte var testad.
+
+Flera andra fel från 2a kunde så klart också uppträda i 2b.
+
+
+
+=============================================================================
+Allmän information om uppgift 3
+=============================================================================
+
+I denna uppgift testar vi framförallt förmågan att hantera rekursiva
+strukturer, i detta fall nästlade listor (alltså listor som innehåller listor
+som innehåller listor, och så vidare i godtyckligt många nivåer).  Detta är
+också ett sätt att representera träd, något vi har diskuterat och laborerat
+med vid olika tillfällen under kursen.
+
+Strukturerna är alltså rekursiva.  Det är ändå OK att använda iterativa
+lösningar om man vill, t.ex. genom att använda en explicit stack, men det är
+inte något som vi har diskuterat under kursen.  Den lösningsmetod vi har gått
+genom är rekursiv, i alla fall när det gäller att rekursera "ner" i element
+som råkar vara listor.  Detta är då huvudpoängen med övningen, så om nästlade
+listor inte fungerar kan det ge större avdrag.
+
+Exempelvis händer det att nästlingen i resultatet blir fel -- saknas helt,
+blir för djup, eller liknande.  Det händer också att lösningen enbart klarar
+icke-nästlade listor.
+
+För full poäng måste man också kunna hantera alla olika datatyper i de
+nästlade listorna. Man ska alltså:
+
+1) Se om nuvarande elementet är en lista, och i så fall rekursera ner i det.
+
+2) Se om nuvarande elementet är ett udda heltal, och i så fall multiplicera
+med 2
+
+3) Annars är elementet "något annat", t.ex. ett jämnt heltal eller ett udda
+flyttal eller en tupel eller en sträng eller något annat av tusentals eller
+miljoner tänkbara typer. Då ska vi ha kvar elementet precis som det är.
+
+Inom det området har det funnits många olika typer av problem, som vi kan
+dela upp i två grupper.
+
+Feltyp A: Man försöker särbehandla andra specifika typer än listor och udda
+heltal.  Det kan leda till att man bara klarar av int/float/str/tuple/list
+och inget annat, eller att man bara klarar int/str/tuple/list, eller bara
+int/str/tuple/list och *jämna* floats, eller bara heltal, eller bara heltal
+och jämna floats, eller
+
+Feltyp B: Man testar inte alls om något är ett heltal innan man försöker
+testa om det är udda eller multiplicera det med 2.  Det kan leda till att
+udda flyttal som 1.0 dubbleras, att icke-jämna flyttal som 1.5 dubbleras
+(varken jämnt eller udda!), och så vidare.
+
+Någon lösning använde index() för att hitta hur långt man har kommit i
+listan, vilket inte fungerar när listan innehåller samma element flera
+gånger.
+
+
+
+=============================================================================
+Allmän information om uppgift 4
+=============================================================================
+
+Uppgift 4 handlar om högre ordningens funktioner.
+
+I del A ska man skriva en funktion som returnerar en ny funktion.  Här finns
+inga tydliga mönster i de fel som uppstår.  Någon klarar inte tomma listan,
+någon anropar isinstance(x,pred) istället för pred(x), någon anropar
+pred(listan) istället för pred(elementet), någon hårdkodar exemplet med
+strängar och stränglängder inuti sum_satisfying(), och ett par behandlar
+nästlade listor vilket inte skulle göras i denna uppgift.
+
+Även del B saknar tydliga mönster i problemen.
+
+Generellt sett var det vanligare att man inte lämnade in någon lösning på
+4A/B än att det fanns en lösning som var felaktig.
+
+
+
+=============================================================================
+Allmän information om uppgift 5
+=============================================================================
+
+Uppgift 5 testar förmågan att skapa funktioner som opererar på en given
+datatyp, i detta fall en matrisdatatyp representerad som en lista av listor.
+
+Funktionerna rows() och columns() ger helt enkelt antalet element i en lista.
+
+I transpose() behöver man tänka efter lite mer för att iterera i rätt
+ordning. Samtidigt ges lösningen i princip i frågan (A^T[i,j] = A[j,i])
+tillsammans med exempelmallen:
+
+    result = []
+    for i in range(hur många rader vi vill ha i svaret):
+        row = []
+        for j in range(hur många kolumner vi vill ha):
+            element = uträkning av värdet $c_{i,j}$
+            row.append(element)
+        result.append(row)
+
+Så antalet rader i svaret är antalet kolumner i frågan, antalet kolumner i
+svaret är antalet rader i frågan, och elementet på position [i,j] =
+matrix[j][i]. Då har vi lösningen:
+
+    def facit_transpose(matrix):
+        result = []
+        for i in range(facit_columns(matrix)):
+            row = []
+            for j in range(facit_rows(matrix)):
+                element = matrix[j][i]
+                row.append(element)
+            result.append(row)
+
+        return result
+
+Här finns några lösningar som bara klarar matriser med 2 rader, vilket inte
+ger poäng.  Någon lösning fungerar med 1x1-matriser, någon glömmer att
+returnera värden, ibland är funktionen inte implementerad, och ibland klarar
+den inga testfall.
+
+5D handlar om map(), som ska applicera en funktion på varje element.  Detta
+är också en rättfram applicering av mallen där element = fun(matrix[i][j]:
+
+    def facit_map(matrix, fun):
+        result = []
+        for i in range(facit_rows(matrix)):
+            row = []
+            for j in range(facit_columns(matrix)):
+                element = fun(matrix[i][j])
+                row.append(element)
+            result.append(row)
+
+        return result
+
+Här hade vi ett större antal som inte lämnade in någon lösning.  I övrigt
+finns inget direkt mönster.  Samma gäller 5E, plus(mat1,mat2).
+
+5F visade sig vara en svårare uppgift.  Även här kunde man använda mallen.
+Uppgiften säger:
+
+"Anta till exempel att A är en m × n-matris (m rader, n kolumner) och att B
+är en p × q-matris. Då är AB bara definierad om n = p, och resultatet blir då
+en m × q-matris."
+
+Så "hur många rader vi vill ha i svaret" är m, alltså rows(m1), och "hur
+många kolumner vi vill ha" är q, alltså columns(m2).
+
+Elementet på varje position ska vara summa[r=1,n] a_{i,r}*b_{r,j}, där n är
+antalet kolumner i m1.  Det kan vi räkna ut så här:
+
+    val = 0
+    for r in range(facit_columns(matrix1)):
+        val += matrix1[i][r] * matrix2[r][j]
+
+Då har vi den fullständiga lösningen:
+
+    def facit_times(matrix1, matrix2):
+        res = []
+        for i in range(facit_rows(matrix1)):
+            row = []
+            for j in range(facit_columns(matrix2)):
+                val = 0
+                for k in range(facit_columns(matrix1)):
+                    val += matrix1[i][k] * matrix2[k][j]
+                row.append(val)
+            res.append(row)
+        return res
+
+I uppgift 5F var det många som inte lämnade in någon lösning och många
+felaktiga lösningar.  I övrigt inget mönster bland felen.
+
+
+
+=============================================================================
+Allmän information om uppgift 6
+=============================================================================
+
+Uppgift 6 är att skriva en emulator för ett enkelt språk.
+
+I samtliga deluppgifter är det vanligt med problem när man använder register
+som inte uttryckligen har satts till 0 innan programmet körs.
+
+Vi har uttryckligen skrivit att "Det första som sker när man startar ett
+PyAssm-program är att varje register ska sättas till värdet 0 (heltal noll).
+Därefter utförs alla instruktioner i programmet."  Detta har vi försökt vara
+väldigt tydliga med, eftersom det är mycket enklare att göra så än att
+försöka hålla reda på varenda plats där man använder ett register och testa
+om det faktiskt har ett värde eller om man behöver falla tillbaka på 0 som
+ett defaultvärde för ett oinitialiserat register.  Trots detta har en hel del
+försökt göra en alternativ lösning -- och i många fall har det tyvärr
+misslyckats.
+
+Exempel:
+
+- Register utan värde kan inte användas för ADD
+
+- Register utan värde kan inte användas för CPY, men för andra operationer
+
+- Register utan värde kan inte användas för CPY eller MUL
+
+- Register utan värde kan inte användas för JEQ och/eller JNE
+
+- Register utan värde kan inte användas som *destination* till CPY
+
+- ...
+
+Ett annat (mindre vanligt) problem är att använda en lista av
+(register,värde)-tupler för att lagra registervärden, istället för en
+dictionary som är anpassad för just denna funktionalitet.  Detta kan leda
+till att man råkar få flera kopior av ett register i listan eftersom man
+missar att man t.ex. kan göra SET flera gånger på samma register.
+
+I 6b händer det att man stavar fel till JEQ eller JNE, och att detta råkar
+fungera i vissa fall.  Det kan också hända att någon av dessa anropar fel
+evalueringsfunktion, att man använder < där man skulle använda >, och så
+vidare.
+
+Att använda index() för att hitta positionen i programmet fungerar inte om
+det finns flera identiska hoppinstruktioner.
+
+I 6c finns inga direkta mönster.  De flesta har antingen inte implementerat
+JSR eller implementerat den korrekt.
+
+Någon uppgift använder index().
+
+Någon klarar inte att JSR direkt följs av RET i programsekvensen (programmet
+består av [..., JSR x, RET, ...].  I detta fall ska man alltså hoppa till x,
+och när man väl returnerar från x är nästa instruktion att omedelbart
+returnera igen.  Problemet kan t.ex. bero på att implementationen ger RET en
+egen specialbehandling av adressen man hoppar tillbaka till, som förutsätter
+att nästa instruktion som exekveras efter RET är en annan instruktion.

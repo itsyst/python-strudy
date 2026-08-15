@@ -1,0 +1,132 @@
+Rättningsmall för datortenta TDDD73 2017-01-10 8-13
+
+Klarifikationer
+* Allmänt: I given_files finns både tentan som PDF samt en .emacs som startar rätt version av python samt gör lite trevliga inställningar.
+* Uppgift 2: n är strikt positivt, dvs n>0. Slicing inte tillåtet i den iterativa varianten.
+* Uppgift 5: korrekt funktionsnamn är count_change
+
+
+Uppgift 1
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+-0.5: Fungerar ej pga felhantering som inte fungerar
+-2.0: Räknar ut fel uttryck, t.ex. "ax + by + zy = d"
+-2.5: Använder fel intervall
+
+assert diophantine(2, 3, 4, 10, 0, 2) == 3
+assert diophantine(2, 3, 4, 10, 0, 10) == 5
+assert diophantine(2, 3, 4, 9, 1, 1) == 1
+assert diophantine(2, 3, 4, 10, 1, 10) == 0
+assert diophantine(2, 3, 4, 15, 1, 15) == 3
+assert diophantine(2, 3, 4, 10, -5, 10) == 54
+
+
+Uppgift 2
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+-1.0: för slicing
+-1.5: (per funktion) Summerar index istället för värden i listorna.
+
+assert sum_nth_i([3, 2, 3, 4, 5], 1) == 17
+assert sum_nth_i([1, 2, 3, 4, 5], 1) == 15
+assert sum_nth_i([1, 2, 3, 4, 5], 2) == 6
+assert sum_nth_i([1, 2, 3, 4, 5], 3) == 3
+assert sum_nth_i([1, 2, 3, 4, 5], 6) == 0
+assert sum_nth_i([3, 2, 3, 4, 5], 1) == 17
+assert sum_nth_i([9, 3, 1, -4, 445], 2) == -1
+assert sum_nth_i([], 6) == 0
+
+assert sum_nth_r([3, 2, 3, 4, 5], 1) == 17
+assert sum_nth_r([1, 2, 3, 4, 5], 1) == 15
+assert sum_nth_r([1, 2, 3, 4, 5], 2) == 6
+assert sum_nth_r([1, 2, 3, 4, 5], 3) == 3
+assert sum_nth_r([1, 2, 3, 4, 5], 6) == 0
+assert sum_nth_r([3, 2, 3, 4, 5], 1) == 17
+assert sum_nth_r([9, 3, 1, -4, 445], 2) == -1
+assert sum_nth_r([], 6) == 0
+
+
+Uppgift 3
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: fel namn på funktionen 
+-0.5: returnerar bara en tom lista, om man får in en tom lista
+-1.0: skrive fel som göra att det inte går att köra 
+-2.5: destruktiv med muterbara defaultargument
+-3.0: Globala variabler
+-3.0: Om man bara hanterar en nivå av underlistor
+-4.0: Om man bara hanterar listor utan underlistor
+assert split([5, [2, 1, 7], 2, [5]], 5) == ([2, 1, 2], [5, 5], [7])
+assert split([5, [2, [1, 7]], 2, [[5]]], 5) == ([2, 1, 2], [5, 5], [7])
+assert split([5, [2, [1, [7]]], 2, [5]], 5) == ([2, 1, 2], [5, 5], [7])
+
+assert split([5, 2, 1, 7, 2, 5], -1) == ([], [], [5, 2, 1, 7, 2, 5])
+assert split([5, 2, 1, 7, 2, 5], 0) == ([], [], [5, 2, 1, 7, 2, 5])
+assert split([5, 2, 1, 7, 2, 5], 1) == ([], [1], [5, 2, 7, 2, 5])
+assert split([5, 2, 1, 7, 2, 5], 2) == ([1], [2, 2], [5, 7, 5])
+assert split([5, 2, 1, 7, 2, 5], 3) == ([2, 1, 2], [], [5, 7, 5])
+assert split([5, 2, 1, 7, 2, 5], 5) == ([2, 1, 2], [5, 5], [7])
+assert split([5, 2, 1, 7, 2, 5], 7) == ([5, 2, 1, 2, 5], [7], [])
+assert split([5, 2, 1, 7, 2, 5], 8) == ([5, 2, 1, 7, 2, 5], [], [])
+assert split([5, -2, 1, -7, 2, 5], -1) == ([-2, -7], [], [5, 1, 2, 5])
+assert split([5, -2, 1, -7, 2, 5], -2) == ([-7], [-2], [5, 1, 2, 5])
+assert split([5, -2, 1, -7, 2, 5], -7) == ([], [-7], [5, -2, 1, 2, 5])
+assert split([], 2) == ([], [], [])
+
+
+Uppgift 4
+-0.0: 4b är uppdelat i flera uttryck
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-1.0: Använder både en inre funktion och en lambda-funktion
+
+assert abs(integrate(lambda x: 2*x)(0, 1) - 1) < 0.0001
+assert abs(integrate(lambda x: 2*x)(2, 4) - 12) < 0.0001
+assert abs(integrate(lambda x: 3*x*x)(2, 4) - 60) < 0.0001
+
+
+Uppgift 5
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Klarar ej amount = 0
+
+assert count_change([10, 5, 2, 1], 5) == 4
+assert count_change([10, 5, 2, 1], 10) == 11
+assert count_change([10, 5, 2, 1], 100) == 2156
+assert count_change([50, 25, 10, 5, 1], 0) == 1
+assert count_change([50, 25, 10, 5, 1], 1) == 1
+assert count_change([50, 25, 10, 5, 1], 5) == 2
+assert count_change([50, 25, 10, 5, 1], 9) == 2
+assert count_change([50, 25, 10, 5, 1], 10) == 4
+assert count_change([50, 25, 10, 5, 1], 15) == 6
+assert count_change([50, 25, 10, 5, 1], 20) == 9
+assert count_change([50, 25, 10, 5, 1], 25) == 13
+assert count_change([50, 25, 10, 5, 1], 30) == 18
+assert count_change([50, 25, 10, 5, 1], 50) == 50
+assert count_change([50, 25, 10, 5, 1], 75) == 134
+assert count_change([50, 25, 10, 5, 1], 100) == 292
+
+
+Uppgift 6
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+
+m1 = [[1, 0, 2], [-1, 3, 1]]
+assert rows(m1) == 2
+assert columns(m1) == 3
+m2 = transpose(m1)
+assert m2 == [[1, -1], [0, 3], [2, 1]]
+m3 = [[3, 1], [2, 1], [1, 0]]
+assert add(m2, m3) == [[4, 0], [2, 4], [3, 1]]
+assert multiply(m1, m3) == [[5, 1], [4, 2]]
+assert map(m1, lambda x: -x) == [[-1, 0, -2], [1, -3, -1]]
