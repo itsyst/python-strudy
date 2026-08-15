@@ -26,7 +26,7 @@ function metaFor(key) {
 }
 
 async function loadData() {
-  for (const url of ["files.json", "assets/files.json"]) {
+  for (const url of ["assets/files.json", "files.json"]) {
     try {
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) continue;
