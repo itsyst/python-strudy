@@ -1,9 +1,27 @@
 import sys
+ 
+# def depth_sum(nested_list, depth=1):
+#     total = 0
+#     for item in nested_list:
+#         if isinstance(item, list):
+#             total += depth_sum(item, depth + 1) 
+#         else:
+#             total += item * depth
 
-def depth_sum(nested_list) -> int:
-    return 0
-    
+#     return total 
 
+def depth_sum(nested_list):
+    def rec_sum(nested_list, depth):
+        total = 0
+        for item in nested_list:
+            if isinstance(item, list):
+                total += rec_sum(item, depth + 1) 
+            else:
+                total += item * depth
+
+        return total
+    return rec_sum(nested_list, depth=1)
+ 
 
 
 def check_python_version():
