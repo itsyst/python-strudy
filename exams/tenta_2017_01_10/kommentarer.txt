@@ -1,0 +1,120 @@
+Rättningsmall för datortenta TDDD73 2017-01-10 14-19
+
+Uppgift 1
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+-1.0: Klarar inte av fall där den närmsta har ett lägre/högre värde än föregående närmsta/högsta
+-0.5: Gör ett antagande om någon största distance som inte håller
+
+assert find_closest([1, 2, 4], [1, 3]) == [1, 3, 3]
+assert find_closest([1, 2, 4], [-5, 15, -2]) == [-2, -2, -2]
+assert find_closest([2], [4, 1]) == [1]
+assert find_closest([-1, -2, -4], [-5, 15, -2]) == [-2, -2, -5]
+assert find_closest([-1, -2, -4, 6, 18], [1]) == [1, 1, 1, 1, 1]
+assert find_closest([], []) == []
+assert find_closest([1], [0, 2]) == [2]
+assert find_closest([1], [2, 0]) == [2]
+
+
+Uppgift 2
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+-0.5: (per funktion) klarar inte av tomma listan
+-1.0: för slicing
+-1.5: Destruktiv med muterbara defaultargument
+
+assert split_i([5, 2, 1, 7, 2, 5], 0) == ([], [], [5, 2, 1, 7, 2, 5])
+assert split_i([5, 2, 1, 7, 2, 5], 1) == ([], [1], [5, 2, 7, 2, 5])
+assert split_i([5, 2, 1, 7, 2, 5], 2) == ([1], [2, 2], [5, 7, 5])
+assert split_i([5, 2, 1, 7, 2, 5], 3) == ([2, 1, 2], [], [5, 7, 5])
+assert split_i([5, 2, 1, 7, 2, 5], 5) == ([2, 1, 2], [5, 5], [7])
+assert split_i([5, 2, 1, 7, 2, 5], 7) == ([5, 2, 1, 2, 5], [7], [])
+assert split_i([5, 2, 1, 7, 2, 5], 8) == ([5, 2, 1, 7, 2, 5], [], [])
+assert split_i([], 2) == ([], [], [])
+
+assert split_r([5, 2, 1, 7, 2, 5], 0) == ([], [], [5, 2, 1, 7, 2, 5])
+assert split_r([5, 2, 1, 7, 2, 5], 1) == ([], [1], [5, 2, 7, 2, 5])
+assert split_r([5, 2, 1, 7, 2, 5], 2) == ([1], [2, 2], [5, 7, 5])
+assert split_r([5, 2, 1, 7, 2, 5], 3) == ([2, 1, 2], [], [5, 7, 5])
+assert split_r([5, 2, 1, 7, 2, 5], 5) == ([2, 1, 2], [5, 5], [7])
+assert split_r([5, 2, 1, 7, 2, 5], 7) == ([5, 2, 1, 2, 5], [7], [])
+assert split_r([5, 2, 1, 7, 2, 5], 8) == ([5, 2, 1, 7, 2, 5], [], [])
+assert split_r([], 2) == ([], [], [])
+
+
+Uppgift 3
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Fel namn på funktionen 
+-0.5: Returnerar bara en tom lista, om man får in en tom lista
+-1.0: Skriver fel som göra att det inte går att köra 
+-2.5: Destruktiv med muterbara defaultargument
+-3.0: Globala variabler
+-3.0: Om man bara hanterar en nivå av underlistor
+-4.0: Om man bara hanterar listor utan underlistor
+
+assert sum_nth([3, 2, [3, 4], 5], 1) == 17
+assert sum_nth([1, 2, 3, 4, 5], 1) == 15
+assert sum_nth([1, 2, 3, [4, 5]], 2) == 6
+assert sum_nth([[1], 2, 3, 4, 5], 3) == 3
+assert sum_nth([1, [2, [3], 4], 5], 6) == 0
+assert sum_nth([3, 2, [3, 4], 5], 1) == 17
+assert sum_nth([9, 3, 1, [[-4]], 445], 2) == -1
+assert sum_nth([], 6) == 0
+
+
+Uppgift 4
+-0.0: 4b är uppdelat i flera uttryck
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: delar inte med 2h utan med 2 och gångrar resultatet med h
+-1.0: Använder både en inre funktion och en lambda-funktion
+-1.0: Använder heltalsdivision istället för division
+-1.0: Generera en funktion för 2x³ men anropar den inte sen.
+
+assert abs(derivate(lambda x: 2*x, 0.0001)(2) - 2) < 0.0001
+assert abs(derivate(lambda x: 2*x*x*x, 0.0001)(2) - 24) < 0.0001
+
+
+Uppgift 5
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Hanterar inte tomma listan korrekt
+-0.5: Hanterar inte fallet när alla element i listan är samma
+-3.0: klarar inte av fallen när det inte bara är att girit lägga till alla större element.
+-1.0: Hanterar inte första elementet korrekt
+-1.0: Hanterar inte sista elementet korrekt
+-1.0: Hanterar inte listor av lägnde 1 korrekt
+
+assert lis([0, 2, 4, 8]) == 4
+assert lis([0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15]) == 6
+assert lis([-2, -1, 3, 7278]) == 4
+assert lis([]) == 0
+assert lis([-1]) == 1
+assert lis([-1, -2]) == 1
+assert lis([2,2,2]) == 3
+
+
+Uppgift 6
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-1.0: För många hakparanteser i samma uttryck
+-1.0: create_network antar att det alltid finns tre lager
+
+nn = create_network([3, 4, 2], lambda x: 1/(1+math.exp(-x)))
+assert feed_forward(nn, [1, 0, 1]) == [[0.5, 0.5, 0.5, 0.5], [0.5, 0.5]]
+init_weights(nn)
+output = feed_forward(nn, [1, 0, 1])
+assert len(output) == 2
+assert len(output[0]) == 4
+assert len(output[1]) == 2

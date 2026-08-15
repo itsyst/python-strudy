@@ -1,0 +1,111 @@
+Rättningsmall för datortenta TDDE24/TDDD73 2018-01-12 08-13
+
+Uppgift 1
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+-2.0: Hanterar inte skottår korrekt
+
+assert day_of_year(('jan', 2), False) == 2
+assert day_of_year(('mar', 10), False) == 69
+assert day_of_year(('mar', 10), True) == 70
+assert day_of_year(('feb', 27), True) == 58
+assert day_of_year(('feb', 27), False) == 58
+assert day_of_year(('feb', 28), True) == 59
+assert day_of_year(('feb', 28), False) == 59
+assert day_of_year(('feb', 29), True) == 60
+assert day_of_year(('mar', 1), False) == 60
+assert day_of_year(('mar', 1), True) == 61
+assert day_of_year(('dec', 31), False) == 365
+assert day_of_year(('dec', 31), True) == 366
+
+
+Uppgift 2
+-0.0: Saknar doc-string, på senare uppgifter kommer detta ge avdrag
+-0.0: Dålig stil, på senare uppgifter kommer detta ge avdrag
+-0.0: Dåligt val av variabelnamn, på senare uppgifter kan detta ge avdrag
+-0.0: Felaktig assert (syntax error)
+-0.5: Print istället för return
+-0.5: Felindenterad docstring
+-1.0: Inkorrekt basfall
+-2.5: (per funktion) 
+ 0: en rekursiv implementation av en iterativ lösningsmodell.
+
+assert odd_r([1, 2, 3, 4, 5]) == [1, 3, 5]
+assert odd_r([1, 3, 5]) == [1, 3, 5]
+assert odd_r([2, 4, 6]) == []
+assert odd_r([]) == []
+
+assert odd_i([1, 2, 3, 4, 5]) == [1, 3, 5]
+assert odd_i([1, 3, 5]) == [1, 3, 5]
+assert odd_i([2, 4, 6]) == []
+assert odd_i([]) == []
+
+
+
+Uppgift 3
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Fel namn på funktionen
+-1.0: Missar något enstaka testfall
+-1.0: Defaultargument som återanvänds mellan körningar
+-1.0: Klarar inte tomma listor som element
+-3.0: Hårdkodat antalet listor
+-4.0: Klara bara raka listor
+
+def comp_dictionaries(dict1, dict2):
+    for k in dict1:
+        if not k in dict2 or sorted(dict1[k]) != sorted(dict2[k]):
+            return False
+    return True
+
+assert comp_dictionaries(partition(['a', 'aa', 'b', 'ccc', 'dd']), {1: ['a', 'b'], 2: ['aa', 'dd'], 3: ['ccc']})
+assert comp_dictionaries(partition(['a', ['aa', ['b'], ['ccc', 'dd']]]), {1: ['b', 'a'], 2: ['dd', 'aa'], 3: ['ccc']})
+assert comp_dictionaries(partition([]), {})
+assert comp_dictionaries(partition([[[]]]), {})
+assert comp_dictionaries(partition([[], 'a']), {1: ['a']})
+assert comp_dictionaries(partition(['a', 'aa', 'b', 'ccc', 'dd']), {1: ['a', 'b'], 2: ['aa', 'dd'], 3: ['ccc']})
+assert comp_dictionaries(partition([[], 'abcd']), {4: ['abcd']})
+assert comp_dictionaries(partition(['a', 'aa', 'aaa', 'aaaa']), {1: ['a'], 2: ['aa'], 3: ['aaa'], 4: ['aaaa']})
+
+
+Uppgift 4
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Borde vara uttryck istället för funktion
+-1.0: Mer än ett uttryck
+-1.0: Applicerar inte funktionen på numbers
+
+numbers = list(map(bind_1st(lambda x, y: x+y, 3), [2, 1, 3]))
+
+assert bind_1st(lambda x, y: x*y, 3)(2) == 6
+assert numbers == [5, 4, 6]
+
+
+Uppgift 5
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-0.5: Felindenterad doc-string
+-0.5: Fel namn på funktionen
+-3.0: Girig lösning
+
+assert knapsack([(12,4), (2,2), (1,2), (1,1), (4,10)], 15) == 15
+assert knapsack([(12,12), (2,2), (1,2), (1,1), (4,10)], 15) == 16
+assert knapsack([(12,9), (2,2), (1,3), (1,2), (1,2), (1,1), (4,10)], 15) == 20
+assert knapsack([(24,9), (5,5), (5,5)], 25) == 10
+assert knapsack([(19,2), (5,5), (19,2), (5,5)], 25) == 10
+assert knapsack([(1, 1), (1, 1), (2, 3)], 2) == 3
+assert knapsack([(4,4.5), (3,3), (2,2)], 5) == 5
+assert knapsack([(19,2), (5,5), (5,5), (19,2), (5,5)], 25) == 15
+
+
+Uppgift 6
+-0.5: Saknar doc-strings
+-0.5: Dåligt val av doc-strings
+-0.5: Dålig stil
+-2.0: Har en datatyp utan några primitiver och som manipuleras direkt av SQL-operationerna

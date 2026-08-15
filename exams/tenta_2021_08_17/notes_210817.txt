@@ -1,0 +1,151 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlämningar hade granskats.
+
+Tanken är både att ge mer information kring hur man kan tänka när man löser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstått under
+just denna tentaomgång.  Vi fokuserar då på de fel som faktiskt har uppstått,
+inte sådana som teoretiskt kunde ha uppstått, och de fall där felen tyder på
+specifika tankefel och liknande missar snarare än slumpmässiga misstag eller
+slarv.  Vid omtentor, där det är färre som går upp på tentan, blir det ofta
+också färre typfel att diskutera.
+
+Lösningsförslag kan finnas inbakade i informationen eller i en separat fil.
+Tänk på att det går att lösa uppgifterna på många olika sätt och att det inte
+automatiskt är fel bara för att en lösning ser annorlunda ut.
+
+=============================================================================
+Allmän information om uppgift 1
+=============================================================================
+
+Denna uppgift testar enklare programmering i Python, med hantering av listor
+och tupler.
+
+Vanligaste felet är att man modifierar indata. Tänk på att "lista1 = lista2"
+inte gör någon kopia!
+
+Eftersom det inte står något särskilt om hur man ska behandla olika typer av
+element, ska man t.ex. inte behandla listelement annorlunda -- det handlar
+bara om elementen som faktiskt finns i seq, och dessa element kan råka vara
+listor eller tupler eller heltal eller vad som helst.
+
+
+
+=============================================================================
+Allmän information om uppgift 2
+=============================================================================
+
+Uppgift 2a testar också främst enklare programmering i Python, med hantering
+av listor och tupler.  Här får vi också "komplikationen" att dela upp
+strängar i tecken, att konvertera siffersträngar till tal, och att hantera
+tomma listor.
+
+Några lösningar ger fel resultat när sizes innehåller 0, och oftast då när
+sizes *slutar* med "0".  Vi har poängterat i uppgiften att 0 kan finnas "på
+godtycklig position" och att det ska returneras en "lista av len(sizes)
+listor", och om man hoppar över avslutande nollor i sekvensen bryter man mot
+detta.  Det kan också bli fel när sizes *börjar* med "0".
+
+Även i denna uppgift händer det att man modifierar sina indata.  Ett sätt att
+testa detta är att skriva ut värdet av alla parametrar innan man returnerar
+från funktionen, och se om det ser ut att vara identiskt med ursprungliga
+indata.
+
+I stort har det gått bra på denna uppgift, lika bra som för uppgift 1.
+
+Uppgift 2b testar också att göra en rekursiv implementation.  Här har vi en
+betydligt lägre lösningsgrad, vilket beror på att man inte har implementerat
+funktionen alls (i hälften av fallen) men också på att fler får problem när
+sizes slutar med "0".  Här kan det t.ex. hända att man "inga element kvar att
+leta upp" som ett basfall och att man då ignorerar att det finns siffror
+(nollor) kvar att behandla.
+
+
+
+=============================================================================
+Allmän information om uppgift 3
+=============================================================================
+
+Uppgift 3 går vidare med att testa en något mer komplicerad struktur, där man
+ska hoppa framåt och bakåt i två sekvenser på samma gång (hanterar två index)
+och där man ska ha flera olika slutvillkor.
+
+Många av problemen i denna lösning beror på att man inte följer den
+uppställda hanteringen av slutvillkoren, kanske för att man vill skriva
+mindre kod.  Vi skriver uttryckligen när villkor ska testas:
+
+- Om vi JUST HAR HOPPAT, OCH RESULTATET ÄR... men de villkoren har ibland
+t.ex. flyttats till början av en loop, där man (a) kanske inte har gjort
+något hopp än, (b) kanske har gjort något annat test före.
+
+- Om vi JUST HAR HOPPAT UTAN ATT NÅ FRAM... men ibland testas detta i fel
+ordning, så det triggas trots att man faktiskt har nått fram.
+
+- Om vi ÄR PÅ VÄG ATT HOPPA, MEN... men ibland flyttas det till andra platser
+där vi t.ex. just HAR hoppat, så man kanske missar att göra testet innan
+allra första hoppet, eller gör det i fel ordning relativt andra tester.
+
+Vi skriver också "Tänk på att slutvillkoren måste testas vid varje hopp, inte
+bara efter att två hopp har gjorts!" och detta ignoreras ibland, vilket ger
+problem om man ska få ett visst resultat efter ett udda antal hopp.  De
+angivna testfallen använder visserligen ett jämnt antal hopp, men man måste
+också testa alternativ.
+
+Man behöver också testa fler fall där maxjumps är LITET eller STORT.  Det
+krävs inte mycket arbete för att stoppa in testerna i en loop:  for maxjumps
+in (1, 2, 3, 4, 10, 1000): gör-alla-tester.  Då ser man t.ex. om det kraschar
+vid vissa indata, även om man inte vet korrekta resultaten.
+
+Ytterligare felfall kan komma från att man t.ex. plockar ut mittvärde från
+seq1 på något sätt, och sedan försöker hitta dess position med
+seq1.index(mittvärde).  Det fungerar inte då mittvärde finns flera gånger i
+seq1!  Se t.ex. testfallet alternating_jumps([2], [1, 1, -10, 5], 10), som
+visar att samma värde kan finnas flera gånger.  Slutsats: Använd aldrig
+index() om du vill veta var DU har fått ett element ifrån.  Se alltid till
+att spara undan indexet när du plockar ut elementet.
+
+
+
+=============================================================================
+Allmän information om uppgift 4
+=============================================================================
+
+Denna fråga testar behandling av nästlade strukturer, där det är naturligt
+att använda rekursion för att förenkla problemlösningen (även om det också
+kan lösas på andra sätt).
+
+Ett antal av er har inte lämnat in någon lösning.  I vissa fall har det
+blivit problem med rekursionen eller evalueringsordningen.
+
+
+
+=============================================================================
+Allmän information om uppgift 5
+=============================================================================
+
+Här testar vi vissa former av högre ordningens funktioner: Att ta in en
+funktion som parameter och applicera den, och att definiera en funktion som
+returnerar en ny funktion.
+
+Relativt många har lämnat in en lösning, och för dessa finns bara ett fåtal
+poängavdrag, bl.a. för att inte ha implementerat flip() eller för att
+apply_to_both() inte fungerar då *första* sekvensen är längre.
+
+
+
+=============================================================================
+Allmän information om uppgift 6
+=============================================================================
+
+Här ger vi en sista uppgift som använder sig av kombinatorik, något som också
+finns i många gamla tentafrågor.
+
+Tidigare har studenter ofta försökt "optimera" sina kombinatoriska lösningar
+genom att inte testa alla varianter, vilket tyvärr alltid ger fall som inte
+fungerar.  För att undvika det problemet har vi denna gång sett till att man
+först ska returnera just alla varianter, så man inte ska tänka att en
+optimering kan fungera.
+
+Lösningsgraden har ändå varit relativt låg, något som kan vara naturligt för
+den sista och svåraste uppgiften på en omtenta.
+
+

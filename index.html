@@ -1,82 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python Study · Lectures & Tentor</title>
+  <title>Python Study · TDDE24</title>
+  <meta name="description" content="Student materials for TDDE24 — exams, labs, övningar and seminars." />
   <link rel="stylesheet" href="assets/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="nav-brand" onclick="showHome()">
-      <span class="logo">🐍</span>
-      <span>Python Study</span>
+  <nav class="navbar" role="navigation" aria-label="Main">
+    <div class="nav-brand" onclick="showHome()" title="Home">
+      <span class="logo" aria-hidden="true">🐍</span>
+      <span class="brand-text">Python Study</span>
     </div>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-links">
       <button class="nav-btn active" data-view="home" onclick="showHome()">Home</button>
-      <button class="nav-btn" data-view="lectures" onclick="showSection('lectures')">Lectures</button>
-      <button class="nav-btn" data-view="exams" onclick="showSection('exams')">Exams</button>
     </div>
     <div class="search-wrap">
-      <input type="search" id="search" placeholder="Search lectures & exams…" autocomplete="off" />
-      <span class="search-icon">⌕</span>
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input type="search" id="search" placeholder="Search files…" autocomplete="off" aria-label="Search files" />
     </div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
   </nav>
 
   <main id="app">
-    <!-- Home -->
     <section id="view-home" class="view active">
       <div class="hero">
+        <p class="hero-badge">TDDE24 · Python</p>
         <h1>Python Study Materials</h1>
-        <p>Clean lectures and past exams (Tentor) for students. Click any item to view the code right here.</p>
-        <div class="hero-cards">
-          <div class="card" onclick="showSection('lectures')">
-            <div class="card-icon">📚</div>
-            <h3>Lectures</h3>
-            <p>10 cleaned examples · data structures, functions, control flow…</p>
-          </div>
-          <div class="card" onclick="showSection('exams')">
-            <div class="card-icon">📝</div>
-            <h3>Exams</h3>
-            <p>Past tentor organized by date · ready to practice</p>
-          </div>
+        <p class="hero-sub">Exams, labs, exercises and seminars — open any file and read the code in the browser.</p>
+        <div class="hero-cards" id="home-cards"></div>
+      </div>
+    </section>
+
+    <div id="dynamic-sections"></div>
+
+    <section id="view-viewer" class="view">
+      <div class="viewer-toolbar">
+        <button class="tool-btn back-btn" onclick="goBack()" type="button">← Back</button>
+        <h2 id="viewer-title" class="viewer-title">File</h2>
+        <div class="viewer-actions">
+          <a id="raw-link" class="tool-btn raw-btn" href="#" target="_blank" rel="noopener">Raw</a>
+          <button class="tool-btn copy-btn" onclick="copyCode()" type="button">Copy</button>
         </div>
       </div>
-    </section>
-
-    <!-- Lectures list -->
-    <section id="view-lectures" class="view">
-      <header class="section-header">
-        <h2>Lectures</h2>
-        <p>Click a file to open it inside the site</p>
-      </header>
-      <div id="lectures-list" class="file-grid"></div>
-    </section>
-
-    <!-- Exams list -->
-    <section id="view-exams" class="view">
-      <header class="section-header">
-        <h2>Exams (Tentor)</h2>
-        <p>Past exams by date — click to open</p>
-      </header>
-      <div id="exams-list" class="file-grid"></div>
-    </section>
-
-    <!-- Viewer -->
-    <section id="view-viewer" class="view">
-      <div class="viewer-header">
-        <button class="back-btn" onclick="goBack()">← Back</button>
-        <h2 id="viewer-title">File</h2>
-        <button class="copy-btn" onclick="copyCode()">Copy</button>
-      </div>
-      <pre id="code-block"><code id="code-content" class="language-python"></code></pre>
+      <pre id="code-block"><code id="code-content"></code></pre>
     </section>
   </main>
 
-  <footer>
-    <p>Python Study · for students · <a href="https://github.com/itsyst/python-strudy" target="_blank">GitHub</a></p>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo" aria-hidden="true">🐍</span>
+        <div>
+          <strong>Python Study</strong>
+          <p>Materials for students · TDDE24</p>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <a href="#" onclick="showHome(); return false;">Home</a>
+        <a href="https://github.com/itsyst/python-strudy" target="_blank" rel="noopener">Repository</a>
+        <a href="https://itsyst.github.io/python-strudy/" target="_blank" rel="noopener">Live site</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Author</h4>
+        <a href="https://github.com/itsyst" target="_blank" rel="noopener">@itsyst on GitHub</a>
+        <a href="https://github.com/itsyst/python-strudy/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+
+      <div class="footer-copy">
+        <p>© 2026 <a href="https://github.com/itsyst" target="_blank" rel="noopener">itsyst</a></p>
+        <p class="muted">All rights reserved · Free for students</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Made for TDDE24 students · Hosted on GitHub Pages</p>
+    </div>
   </footer>
 
   <script src="assets/app.js"></script>

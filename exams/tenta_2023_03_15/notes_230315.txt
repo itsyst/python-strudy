@@ -1,0 +1,373 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlÃ¤mningar hade granskats.
+
+Tanken Ã¤r bÃ¥de att ge mer information kring hur man kan tÃ¤nka nÃ¤r man lÃ¶ser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstÃ¥tt under
+just denna tentaomgÃ¥ng.  Vi fokuserar dÃ¥ pÃ¥ de fel som faktiskt har uppstÃ¥tt,
+inte sÃ¥dana som teoretiskt kunde ha uppstÃ¥tt, och de fall dÃ¤r felen tyder pÃ¥
+specifika tankefel och liknande missar snarare Ã¤n slumpmÃ¤ssiga misstag eller
+slarv.  Vid omtentor, dÃ¤r det Ã¤r fÃ¤rre som gÃ¥r upp pÃ¥ tentan, blir det ofta
+ocksÃ¥ fÃ¤rre typfel att diskutera.
+
+LÃ¶sningsfÃ¶rslag kan finnas inbakade i informationen eller i en separat fil.
+TÃ¤nk pÃ¥ att det gÃ¥r att lÃ¶sa uppgifterna pÃ¥ mÃ¥nga olika sÃ¤tt och att det inte
+automatiskt Ã¤r fel bara fÃ¶r att en lÃ¶sning ser annorlunda ut.
+
+=============================================================================
+
+Hur svÃ¥r en tenta egentligen Ã¤r beror pÃ¥ bÃ¥de uppgifternas svÃ¥righet,
+poÃ¤ngsÃ¤ttningen, och poÃ¤nggrÃ¤nserna.  Detta betyder att poÃ¤nggrÃ¤nser inte
+mÃ¥ste vara samma frÃ¥n tenta till tenta.  FÃ¶r denna tenta har vi fÃ¶ljande
+betygsgrÃ¤nser:
+
+14.5p krÃ¤vs fÃ¶r godkÃ¤nt / betyg 3.
+
+19.5p krÃ¤vs fÃ¶r betyg 4.
+
+24.5p krÃ¤vs fÃ¶r betyg 5.
+
+=============================================================================
+AllmÃ¤n information om uppgift 1
+=============================================================================
+
+En uppgift som gÃ¥r ut pÃ¥ att hantera vÃ¤rden i listor.
+
+    def facit_datause(seq: list):
+        result = []
+        acc = 0
+
+        for mb in seq:
+            if mb is None:
+                # Separator anger slut pÃ¥ en mÃ¥nad; bÃ¶rja pÃ¥ nÃ¤sta
+                result.append(acc)
+                acc = 0
+            else:
+                # FortsÃ¤tt pÃ¥ samma mÃ¥nad
+                acc += mb
+
+        # Sista mÃ¥naden mÃ¥ste ocksÃ¥ lÃ¤ggas till
+        result.append(acc)
+        result.append(max(result))
+        return result
+
+HÃ¤r var det relativt vanligt att misslyckas nÃ¤r seq Ã¤r tom.  Uppgiften nÃ¤mner
+att 'Om listan dessutom Ã¤r helt tom gÃ¤ller den en enda mÃ¥nad dÃ¥ inget
+laddades ned, vilket innebÃ¤r att resultatet ocksÃ¥ behÃ¶ver innehÃ¥lla en mÃ¥nad
+utan konsumtion'.  Detta innebÃ¤r dÃ¥ ocksÃ¥ att denna mÃ¥nad var den som hade
+hÃ¶gst konsumtion, sÃ¥ att resultatet ska bli [0,0].
+
+Hanteringen av flera None i rad var problematisk i vissa lÃ¶sningar.  Det
+enklaste Ã¤r att som ovan alltid behandla ETT element ur seq i taget, och lÃ¥ta
+None trigga bÃ¶rjan pÃ¥ en ny mÃ¥nad.  Att fÃ¶rsÃ¶ka ta hand om bÃ¥de None och
+elementet fÃ¶re/efter i samma iteration leder lÃ¤tt till trassel.  Det fanns
+mÃ¥nga varianter pÃ¥ detta problem, som att felet uppstÃ¥r enbart fÃ¶r [None],
+fÃ¶r minst 2 None i rad, fÃ¶r minst 3 None i rad, fÃ¶r alla kombinationer av 0
+eller flera None dÃ¥ andra element saknas helt.
+
+Hanteringen av 0 var ocksÃ¥ problematisk i vissa fall.
+
+Vissa lÃ¶sningar fÃ¶rsÃ¶ker titta om ett element Ã¤r det sista genom att testa om
+element==seq[-1]. Som vi har varnat fungerar detta inte om samma element
+finns flera gÃ¥nger i seq, exempelvis [15,20,15].
+
+Hanteringen av maximum kan ske pÃ¥ mÃ¥nga olika sÃ¤tt.  I lÃ¶sningen ovan tar vi
+max(result), vilket alltid ger korrekt resultat dÃ¥ result redan innehÃ¥ller
+alla mÃ¥nadsvÃ¤rden.  Man kan ocksÃ¥ ha en variabel som representerar "max
+hittills" och som hela tiden uppdateras fÃ¶r varje ny mÃ¥nad, men dÃ¥ mÃ¥ste man
+ocksÃ¥ se till att den uppdateras fÃ¶r alla mÃ¥nader.  I vissa fall missades
+detta t.ex. fÃ¶r den allra sista mÃ¥naden, som ofta blir ett specialfall efter
+att en loop har avslutats.
+
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 2
+=============================================================================
+
+LÃ¶sningsfÃ¶rslag fÃ¶r 2a:
+
+    def facit_rle_i(seq):
+        result = []
+
+        # This is a version that handles one element at a time.
+        for element in seq:
+            if result and result[-1][1] == element:
+                # Something was already added to result,
+                # and our current element is the same as the last one added
+                # So: We need to increment the count for the last tuple
+                # But: Tuples can't be modified, so we must create a new tuple
+                last_count = result[-1][0]
+                last_element = result[-1][1]
+                result[-1] = (last_count + 1, last_element)
+            else:
+                # This element is either the first one, or different from
+                # the previous one.  We have now found ONE such element.
+                result.append((1, element))
+        return result
+
+HÃ¤r var det relativt mÃ¥nga som hade problem nÃ¤r det bara fanns 1 kopia av det
+sista elementet i sekvensen, som i [4,4,4,7,7,6].  Ett par klarade inte att
+seq innehÃ¶ll None, och nÃ¥gon klarade inte att seq innehÃ¶ll 0.
+
+LÃ¶sningsfÃ¶rslag fÃ¶r 2b:
+
+    def facit_rle_r(seq):
+        if not seq:
+            return []
+        else:
+            first_element = seq[0]
+            rest = facit_rle_r(seq[1:])
+            if rest and rest[0][1] == first_element:
+                # Our element is the same as the next element
+                # For example, first_element = "hello",
+                # and rest == [(2, "hello"), (4, "world")]
+                # Should return [(3, "hello"), (4, "world")]
+                return [(rest[0][0] + 1, first_element)] + rest[1:]
+            else:
+                # The next element in 'rest' was a different element
+                return [(1, first_element)] + rest
+
+HÃ¤r fanns inga uppenbara mÃ¶nster i problemen.
+
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 3
+=============================================================================
+
+Denna uppgift fÃ¶ljer standardmÃ¶nstret fÃ¶r traversering av nÃ¤stlade listor:
+
+    def facit_lookup_nested(seq: list, table: dict):
+        result = []
+        for element in seq:
+            if isinstance(element, list):
+                # Rekursera ner i listor fÃ¶r att behandla deras element
+                result.append(facit_lookup_nested(element, table))
+            else:
+                result.append(table.get(element, None))
+        return result
+
+Exemplet ovan anvÃ¤nder dict.get(nyckel, defaultvÃ¤rde-om-nyckel-saknas).  Det
+gÃ¥r ocksÃ¥ utmÃ¤rkt att explicit testa om 'element in table' (if/else).
+
+Inga specifika problemmÃ¶nster.
+
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 4
+=============================================================================
+
+HÃ¤r testas anvÃ¤ndning av hÃ¶gre ordningens funktioner.  LÃ¶sningsfÃ¶rslag:
+
+    def facit_pairwise_apply(f):
+        def pairwise(l1, l2):
+            result = []
+            for index in range(min(len(l1), len(l2))):
+                result.append(f(l1[index], l2[index]))
+            return result
+
+        return pairwise
+
+Som ett alternativ kan man anvÃ¤nda zip fÃ¶r att iterera Ã¶ver tvÃ¥ eller flera
+listor pÃ¥ samma gÃ¥ng:
+
+    def facit_pairwise_apply_2(f):
+        def pairwise(l1, l2):
+            result = []
+            for pair in zip(l1, l2):
+                result.append(f(*pair))
+            return result
+
+        return pairwise
+
+NÃ¥gra lÃ¶sningar klarar inte att seq1 Ã¤r lÃ¤ngre Ã¤n seq2 (men dÃ¤remot att seq2
+Ã¤r lÃ¤ngre Ã¤n seq1), eller klarar inte motsatsen.
+
+LÃ¶sningsfÃ¶rslag fÃ¶r 4b:
+
+    facit_pairwise_multiply = facit_pairwise_apply(lambda e1, e2: e1 * e2)
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 5
+=============================================================================
+
+Detta Ã¤r en lite lÃ¤ngre uppgift, som bland annat gÃ¥r ut pÃ¥ att fÃ¶lja
+detaljerna i en beskrivning av en algoritm.  Man ska dock tÃ¤nka pÃ¥ att en
+stor del av koden upprepas tvÃ¥ gÃ¥nger "spegelvÃ¤nt", genom att vi fÃ¶rst tittar
+i seq1 fÃ¶r att hoppa i seq2 och sedan tittar i seq2 fÃ¶r att hoppa i seq1.
+
+LÃ¶sningsfÃ¶rslag:     def facit_alternating_jumps(seq1, seq2, max_jumps):
+pos1 = 0  # Position in seq1         pos2 = 0  # Position in seq2
+jumps = []
+
+        while len(jumps) < max_jumps:
+            # How far would we jump, and where would we end up?
+            jump = seq1[pos1]
+            pos2 += jump
+
+            # We're about to jump (before step C).  Can we actually do this,
+            # or would this result in a new position that is outside of
+            # the borders of the sequence?
+            if pos2 < 0 or pos2 >= len(seq2):
+                # No, would go too far
+                return ("out-of-bounds", jumps)
+
+            # Step C: OK, we can perform the jump.
+            jumps.append(jump)
+
+            # Right after step C, did we reach the last element of both sequences?
+            if pos1 == len(seq1) - 1 and pos2 == len(seq2) - 1:
+                # Yes!  We're done.
+                return ("success", jumps)
+
+            # Did we already reach the max number of jumps without reaching the
+            # last element of both sequences?
+            if len(jumps) == max_jumps:
+                return ("no-more-jumps", jumps)
+
+            # ------------------------------------------------------------------
+            # To avoid complications, let's just repeat what we did above,
+            # but with the other sequence.
+
+            # How far would we jump, and where would we end up?
+            jump = seq2[pos2]
+            pos1 += jump
+
+            # We're about to jump (before step D).  Can we actually do this,
+            # or would this result in a new position that is outside of
+            # the borders of the sequence?
+            if pos1 < 0 or pos1 >= len(seq1):
+                # No, would go too far
+                return ("out-of-bounds", jumps)
+
+            # Step D: OK, we can perform the jump.
+            jumps.append(jump)
+
+            # Right after step D, did we reach the last element of both sequences?
+            if pos1 == len(seq1) - 1 and pos2 == len(seq2) - 1:
+                return ("success", jumps)
+
+            # Did we already reach the max number of jumps without reaching the
+            # last element of both sequences?  Then we'll just fall out of the loop
+            if len(jumps) == max_jumps:
+                return ("no-more-jumps", jumps)
+
+        # We can't actually reach this point, because when len(jumps) == max_jumps,
+        # we will *return* out of the while loop
+        pass
+
+HÃ¤r gÃ¤ller det att verkligen fÃ¶lja alla delar av instruktionerna.  FÃ¶r att
+maximera chanserna har vi uttryckligen diskuterat detta, lagt till konkreta
+exempel pÃ¥ sÃ¥dant som kan vara frestande att Ã¤ndra, och fÃ¶rklarat varfÃ¶r
+detta inte Ã¤r en bra idÃ©.  TyvÃ¤rr har detta ofta inte lyckats.
+
+Exempel: "Kanske du vill testa ett villkor strax fÃ¶re ett hopp istÃ¤llet fÃ¶r
+nÃ¤r vi just har hoppat, eller Ã¤ndra ordning pÃ¥ tester fÃ¶r att det ser bÃ¤ttre
+ut? DÃ¥ lÃ¶per du stor risk att Ã¤ndra pÃ¥ algoritmen sÃ¥ den inte alls gÃ¶r vad
+den ska, och att du inte har tillrÃ¤ckligt mÃ¥nga testfall fÃ¶r att upptÃ¤cka
+det."
+
+Ett antal fel har uppstÃ¥tt fÃ¶r att man testar out-of-bounds *efter* att man
+fÃ¶rsÃ¶kte genomfÃ¶ra hoppet, vilket kan leda till IndexError eller att man fÃ¥r
+med fÃ¶r mÃ¥nga element i svaret (jumps).
+
+"TÃ¤nk pÃ¥ att seq1 och seq2 kan innehÃ¥lla samma vÃ¤rde flera gÃ¥nger."  Flera
+lÃ¶sningar hÃ¥ller inte reda pÃ¥ positioner, utan bara pÃ¥ vilka element som
+finns.  Att anropa seq.index(element) fungerar inte dÃ¥ seq==[2,2,2,2,2,2].
+
+"TÃ¤nk pÃ¥ att slutvillkoren mÃ¥ste testas vid varje hopp, inte bara efter att
+tvÃ¥ hopp har gjorts". Vissa lÃ¶sningar fÃ¥r fel dÃ¥ man uppnÃ¥r maxjumps efter
+ett udda antal hopp, eller ska lyckas efter ett udda antal hopp (eventuellt
+bara dÃ¥ detta antal Ã¤r lika med maxjumps), eller liknande.
+
+
+
+=============================================================================
+AllmÃ¤n information om uppgift 6
+=============================================================================
+
+LÃ¶sningsfÃ¶rslag:
+
+    def facit_make_deque():
+        return list()
+
+
+    def facit_length(deque):
+        return len(deque)
+
+
+    def facit_front(deque):
+        if facit_length(deque) > 0:
+            return deque[0]
+        else:
+            return None
+
+
+    def facit_back(deque):
+        if facit_length(deque) > 0:
+            return deque[-1]
+        else:
+            return None
+
+
+    def facit_push_front_d(deque, elt):
+        deque.insert(0, elt)
+
+
+    def facit_pop_front_d(deque: list):
+        if facit_length(deque) > 0:
+            deque.pop(0)
+
+
+    def facit_push_back_d(deque, elt):
+        deque.append(elt)
+
+
+    def facit_pop_back_d(deque):
+        if facit_length(deque) > 0:
+            deque.pop()
+
+
+    def facit_push_front_f(deque, elt):
+        deque2 = list(deque)
+        facit_push_front_d(deque2, elt)
+        return deque2
+
+
+    def facit_pop_front_f(deque):
+        deque2 = list(deque)
+        facit_pop_front_d(deque2)
+        return deque2
+
+
+    def facit_push_back_f(deque, elt):
+        deque2 = list(deque)
+        facit_push_back_d(deque2, elt)
+        return deque2
+
+
+    def facit_pop_back_f(deque):
+        deque2 = list(deque)
+        facit_pop_back_d(deque2)
+        return deque2
+
+Vissa hade problem med att stoppa in nÃ¥got i bÃ¶rjan av en lista, destruktivt.
+HÃ¤r finns t.ex. funktionen seq.insert(0, element) som kan anvÃ¤ndas fÃ¶r detta
+syfte (hittas i dokumentationen). Man kan ocksÃ¥ gÃ¶ra seq[0:0] = [element].
+LÃ¥ngsammare lÃ¶sningar Ã¤r t.ex. att lÃ¤gga till ett element i slutet och sedan
+iterera fÃ¶r att flytta tidigare element ett steg "Ã¥t hÃ¶ger", eller att
+kopiera listan, nollstÃ¤lla den med seq.clear(), lÃ¤gga till det nya fÃ¶rsta
+elementet, och till slut lÃ¤gga till de gamla elementen igen.
+
+En sats som 'deque = deque[1:]', dÃ¤r deque Ã¤r en lista, skapar en *ny* lista
+som innehÃ¥ller fÃ¤rre element. Detta Ã¤ndrar alltsÃ¥ inte pÃ¥ den existerande
+listan destruktivt, vilket testerna ocksÃ¥ visar.  Detta kan lÃ¶sas genom t.ex.
+deque.pop(0), en funktion som hittas i dokumentationen fÃ¶r listor
+(tillgÃ¤nglig pÃ¥ nÃ¤tet). Man kan ocksÃ¥ anvÃ¤nda del deque[0] eller det lite mer
+obskyra deque[:1] = [], eller pÃ¥ liknande sÃ¤tt som ovan, kopiera den gamla
+listan, nollstÃ¤lla deque med deque.clear(), och kopiera tillbaka de element
+man behÃ¶vde.
+
+

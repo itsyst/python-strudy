@@ -1,0 +1,338 @@
+Denna information skickades ut till tentans deltagare efter att alla
+inlämningar hade granskats.
+
+Tanken är både att ge mer information kring hur man kan tänka när man löser
+uppgifterna och att sammanfatta vanliga typer av fel som har uppstått under
+just denna tentaomgång.  Vi fokuserar då på de fel som faktiskt har uppstått,
+inte sådana som teoretiskt kunde ha uppstått, och de fall där felen tyder på
+specifika tankefel och liknande missar snarare än slumpmässiga misstag eller
+slarv.  Vid omtentor, där det är färre som går upp på tentan, blir det ofta
+också färre typfel att diskutera.
+
+Lösningsförslag kan finnas inbakade i informationen eller i en separat fil.
+Tänk på att det går att lösa uppgifterna på många olika sätt och att det inte
+automatiskt är fel bara för att en lösning ser annorlunda ut.
+
+=============================================================================
+Allmän information om uppgift 1
+=============================================================================
+
+I den här uppgiften ville vi testa grundläggande programmering, inklusive
+hantering av loopar, listor och strängar.  Samtidigt handlar det också om att
+läsa instruktionerna och följa med i de villkor som ges.
+
+En grundläggande tankegång kan vara:
+
+-- Dela först upp texten i en lista av delsträngar/ord.  Man kan använda
+   mystring.split(" "), en funktion som har varit med i studiematerialet,
+   eller skriva en kort egen splittningsfunktion.
+
+-- Iterera sedan, och plocka i varje iteration så många ord som det ska vara
+   i nästa dellista.  När det inte finns ord kvar att plocka är man klar.
+
+Lösningsförslag:
+
+def facit_split_fib(s: str):
+    words = s.split(" ")
+    ret = []
+    k = 0
+    while words:
+        num_words = facit_fib(k + 1)
+        ret.append(words[:num_words])
+        # Man kan antingen hålla reda på index för nästa "startplats"
+        # eller som här "ta bort" de ord som man redan har plockat ut.
+        words = words[num_words:]
+        k += 1
+    return ret
+
+Några saker som kan vara bra att tänka på:
+
+-- Slicing (indexering som words[:num_words]) är bra att kunna.  Annars kan
+   man ofta behöva skriva mycket mer kod för att iterera över index.
+
+-- Om man blandar/mixar koden som delar upp i delsträngar/ord och koden som
+   lägger ihop dem till ord kan det bli svårare att läsa den egna koden och
+   svårare att testa olika delar.  Gör man istället detta i sekvens, (1) dela
+   upp strängen i en lista av ord, (2) dela upp orden i dellistor, kan man
+   också testa att uppdelningen i ord verkar fungera som den ska.  Då delas
+   också komplexiteten upp i två separata delar som kan vara lättare att
+   förstå var för sig.
+
+-- Man behöver inte anropa fib() på alla tal upp till längden av listan.  Det
+   tar väldigt lång tid.
+
+
+
+=============================================================================
+Allmän information om uppgift 2
+=============================================================================
+
+I den här uppgiften ville vi ge ytterligare ett test av iteration, användning
+av listor, indexering med mera.  Uppgift 2b testar listbyggare.
+
+Lösningsförslag:
+
+def facit_nth_sums(seq):
+    result = []
+    # För alla startpositioner i sekvensen
+    for k in range(len(seq)):
+        # Hitta tal med *början* på position k, och med k+1 steg mellan talen
+        # (man kan också skriva detta som en loop som börjar på position k
+        #  och stegar upp med k+1 i varje steg).
+        values_to_add = seq[k::k + 1]
+        result.append(sum(values_to_add))
+
+    return result
+
+
+def facit_nth_sums_lc(seq):
+    return [sum(seq[k::k + 1]) for k in range(len(seq))]
+
+
+Att tänka på:
+
+-- Det är bra att klippa och klistra test-assertions från tentan.  De ska
+   fungera exakt som de står skrivna, och man ska alltså t.ex. inte returnera
+   strängar som "1+2+3+4+5".  En assertion som "assert f(x) == 2+3" testar
+   INTE en utskrift utan testar att värdet som returneras från f(x) är lika
+   med värdet av 2+3, alltså 5.
+
+
+
+=============================================================================
+Allmän information om uppgift 3
+=============================================================================
+
+I den här uppgiften ville vi testa rekursion och användning av listor som är
+nästlade till godtyckligt djup.
+
+I lösningsförslaget hittar man först alla positioner och ser sedan till att
+returnera rätt antal. Det går också bra att hålla reda på antalet
+"kvarvarande" positioner i alla anrop.
+
+Lösningsförslag:
+
+def facit_find_nested(nl, pred, n):
+    # To keep things simpler, recursively find ALL positions of matching
+    # elements, then determine how many there are.
+    # Temporarily use a list to construct the position (could also start
+    # with a tuple immediately)
+
+    result = facit_find_nested_rec(nl, pred, [])
+    if len(result) >= n:
+        return result[:n]
+    else:
+        return None, None
+
+
+def facit_find_nested_rec(nl, pred, pos):
+    result = []
+    # Traverse left to right on this level of the list
+    for index, element in enumerate(nl):
+        pos_of_this_element = pos + [index]
+        if isinstance(element, list):
+            # Traverse "downwards" into the list element using recursion
+            # In the recursive call, pos_of_this_element is the position of
+            # the *list*
+            subresult = facit_find_nested_rec(element, pred, pos_of_this_element)
+            result += subresult
+        elif pred(element):
+            # Predicate satisfied, convert the list to a tuple
+            result.append(tuple(pos_of_this_element))
+        else:
+            # Not a list and didn't satisfy the predicate; skip it
+            pass
+    return result
+
+
+=============================================================================
+Allmän information om uppgift 4
+=============================================================================
+
+I den här uppgiften ville vi testa implementation av en egen datatyp,
+liknande det som har gjorts i en av senaste årets labbar.  Vi testar också
+förståelse för existerande datatyper samt grundläggande programmering.
+Uppgiften är uppdelad i många delar för att man ska kunna få delpoäng.
+
+Lösningsförslag:
+
+def facit_new_listdict():
+    return ListDict([])
+
+
+def facit_listdict_put(ld: ListDict, key, value):
+    for element in ld.pairs:
+        if element.key == key:
+            element.value = value
+            return
+
+    # Didn't exist
+    ld.pairs.append(KeyValue(key, value))
+
+
+def facit_listdict_get(ld: ListDict, key, default):
+    for element in ld.pairs:
+        if element.key == key:
+            return element.value
+
+    return default
+
+
+def facit_listdict_delete(ld: ListDict, key):
+    for index, element in enumerate(ld.pairs):
+        if element.key == key:
+            del ld.pairs[index]
+            return True
+
+    return False
+
+
+def facit_listdict_contains(ld: ListDict, key):
+    for element in ld.pairs:
+        if element.key == key:
+            return True
+
+    return False
+
+
+def facit_listdict_values(ld: ListDict):
+    return set(element.value for element in ld.pairs)
+
+
+def facit_listdict_from(map):
+    ld = facit_new_listdict()
+    for key, value in map.items():
+        facit_listdict_put(ld, key, value)
+    return ld
+
+
+def facit_listdict_update(ld_to: ListDict, ld_from: ListDict):
+    for element in ld_from.pairs:
+        facit_listdict_put(ld_to, element.key, element.value)
+
+
+def facit_listdict_add_value(ld: ListDict, key, value):
+    for element in ld.pairs:
+        if element.key == key:
+            if isinstance(element.value, list):
+                element.value.append(value)
+                return
+            else:
+                raise TypeError
+
+    # Didn't find it
+    facit_listdict_put(ld, key, value)
+
+
+def facit_listdict_internal_sort(ld: ListDict, pred):
+    ld.pairs.sort(key=lambda e: e.key)
+
+
+=============================================================================
+Allmän information om uppgift 5
+=============================================================================
+
+I del A av den här uppgiften ville vi främst testa hantering av strängar och
+heltal. Att hitta alla sätt att dela upp en sträng i delsträngar kräver också
+användning av index och loopar.
+
+Heltalet behöver konverteras till en sträng (vilket vi ger en vink om i
+tipsen), så att t.ex. 13172 blir "13172".  Sedan behöver man klippa av denna
+sträng på olika platser, vilket man lämpligen gör genom att iterera över
+olika positioner där man ska klippa (till exempel "13", "17", "2").  I del A
+kan detta göras genom nästlade for-loopar i upp till två nivåer (hitta första
+respektive andra platsen att klippa på), till skillnad från del B. Slutligen
+kan man testa om dessa delsträngar faktiskt motsvarar primtal.
+
+Lösningsförslag:
+
+def facit_split_in_primes_3(n: int):
+
+    # In this suggested solution we have separate checks for dividing
+    # the number into 1, 2 or 3 primes.  This requires a bit more
+    # time when the code is executed, and makes the code longer, but
+    # results in a somewhat simpler structure.
+
+    # Can we "split" into *one* part?  Test the entire number.
+    if facit_is_prime(n):
+        return [n]
+
+    # OK, it would need to be split, so convert it to a string.
+    numstring = str(n)
+
+    # All positions where we can split numstring into *two*
+    # non-empty parts.  Start at 1 because we want at least 1
+    # digit in the first number.  The end index is excluded, so
+    # looping until len(numstring) leaves at least 1 digit in the
+    # second number.
+    for pos1 in range(1, len(numstring)):
+        num1 = int(numstring[:pos1])
+        num2 = int(numstring[pos1:])
+        if facit_is_prime(num1) and facit_is_prime(num2):
+            return [num1, num2]
+
+    # All ways of splitting numstring into *three* parts.  This
+    # could also be shortened by integrating it with the previous
+    # loop.
+
+    for pos1 in range(1, len(numstring)):
+        num1 = int(numstring[0:pos1])
+        if facit_is_prime(int(num1)):
+            # First part was a prime, so let's split remaining into
+            # another two parts
+            remaining = numstring[pos1:]
+            for pos2 in range(1, len(remaining)):
+                num2 = int(remaining[:pos2])
+                num3 = int(remaining[pos2:])
+
+                if facit_is_prime(num2) and facit_is_prime(num3):
+                    return [num1, num2, num3]
+
+    # Tried everything
+    return None, None
+
+I del B utökas det hela med att man kan behöva klippa på godtyckligt många
+platser. En lämplig metod är då att iterera över de platser man kan klippa,
+dela upp strängen i två delar enligt detta ("1", "3172" i första iterationen,
+"13", "172" i andra iterationen och så vidare) och sedan *rekursera* för att
+testa alla platser där den andra delen skulle kunna delas upp i flera delar
+("om nu 13 var ett primtal, kan man då också dela upp 172 i ett eller flera
+primtal?").
+
+Lösningsförslag:
+
+def facit_split_in_primes_n(n: int):
+    assert "0" not in str(n)
+
+    def mysplit(digits: str):
+        # Hur många siffror vill vi ha med i vårt första tal?
+        # Var som helst
+        for prefix_length in range(1, len(digits) + 1):
+
+            # Dela upp i första talet och resten av strängen
+            first_number = int(digits[:prefix_length])
+            rest = digits[prefix_length:]
+
+            if facit_is_prime(first_number):
+                # OK, med denna prefixlängd blev första talet ett primtal.
+
+                if not rest:
+                    # Vi har konsumerat hela strängen.
+                    return [first_number]
+
+                # OK, så vi har en siffersträng kvar att försöka dela upp.
+                rest_result = mysplit(rest)
+
+                if rest_result == (None, None):
+                    # Det gick inte att dela upp resten i primtal.
+                    # Fortsätt med nästa "längd"
+                    pass
+                else:
+                    # OK, vi har fått ett primtal i first_number och
+                    # ett eller flera primtal i rest_result.
+                    return [first_number] + rest_result
+
+        # Fungerade inte för någon längd på första talet.
+        return None, None
+
+    return mysplit(str(n))
