@@ -1,6 +1,89 @@
 {
   "exams": [
     {
+      "group": "tenta__2026_01_14",
+      "items": [
+        {
+          "name": "ex1.py",
+          "path": "exams/tenta__2026_01_14/ex1.py"
+        },
+        {
+          "name": "ex2.py",
+          "path": "exams/tenta__2026_01_14/ex2.py"
+        },
+        {
+          "name": "ex3.py",
+          "path": "exams/tenta__2026_01_14/ex3.py"
+        },
+        {
+          "name": "ex4.py",
+          "path": "exams/tenta__2026_01_14/ex4.py"
+        },
+        {
+          "name": "ex5.py",
+          "path": "exams/tenta__2026_01_14/ex5.py"
+        },
+        {
+          "name": "ex6a.py",
+          "path": "exams/tenta__2026_01_14/ex6a.py"
+        },
+        {
+          "name": "ex6b.py",
+          "path": "exams/tenta__2026_01_14/ex6b.py"
+        }
+      ]
+    },
+    {
+      "group": "tenta__2025_08_19",
+      "items": [
+        {
+          "name": "ex1.py",
+          "path": "exams/tenta__2025_08_19/ex1.py"
+        },
+        {
+          "name": "ex2.py",
+          "path": "exams/tenta__2025_08_19/ex2.py"
+        },
+        {
+          "name": "ex3a.py",
+          "path": "exams/tenta__2025_08_19/ex3a.py"
+        },
+        {
+          "name": "ex3b.py",
+          "path": "exams/tenta__2025_08_19/ex3b.py"
+        },
+        {
+          "name": "ex4.py",
+          "path": "exams/tenta__2025_08_19/ex4.py"
+        },
+        {
+          "name": "ex5a.py",
+          "path": "exams/tenta__2025_08_19/ex5a.py"
+        },
+        {
+          "name": "ex5b.py",
+          "path": "exams/tenta__2025_08_19/ex5b.py"
+        },
+        {
+          "name": "ex6a.py",
+          "path": "exams/tenta__2025_08_19/ex6a.py"
+        },
+        {
+          "name": "ex6b.py",
+          "path": "exams/tenta__2025_08_19/ex6b.py"
+        }
+      ]
+    },
+    {
+      "group": "tenta__2025_03_18",
+      "items": [
+        {
+          "name": "ex1.py",
+          "path": "exams/tenta__2025_03_18/ex1.py"
+        }
+      ]
+    },
+    {
       "group": "tenta_2024_01_09",
       "items": [
         {
