@@ -1,56 +1,76 @@
-/* Python Study – simple SPA */
+/* Python Study – fully dynamic (no hardcoded file lists)
+   New files under lectures/ or exams/ appear automatically after you push.
+*/
 
-const lectures = [
-  { name: "01 Data Structures", path: "lectures/01_data_structures.py", icon: "📦" },
-  { name: "02 Factorial", path: "lectures/02_factorial.py", icon: "🔢" },
-  { name: "03 Strings", path: "lectures/03_strings.py", icon: "🔤" },
-  { name: "04 FizzBuzz", path: "lectures/04_fizzbuzz.py", icon: "buzz" },
-  { name: "05 Control Flow", path: "lectures/05_control_flow.py", icon: "🔀" },
-  { name: "06 Functions", path: "lectures/06_functions.py", icon: "ƒ" },
-  { name: "07 Exceptions", path: "lectures/07_exceptions.py", icon: "⚠️" },
-  { name: "08 Char Frequency", path: "lectures/08_char_frequency.py", icon: "📊" },
-  { name: "09 Numbers", path: "lectures/09_numbers.py", icon: "➕" },
-  { name: "10 Type Conversion", path: "lectures/10_type_conversion.py", icon: "🔄" },
-];
-
-const exams = [
-  { group: "2014-01-14", items: [
-    { name: "ex1 · Find notes", path: "exams/2014-01-14/ex1.py" },
-  ]},
-  { group: "2024-01-09", items: [
-    { name: "ex1 · Cumulative sums", path: "exams/2024-01-09/ex1.py" },
-    { name: "ex2 · Merge sorted lists", path: "exams/2024-01-09/ex2.py" },
-  ]},
-  { group: "2025-03-18", items: [
-    { name: "ex1 · Doors (stub)", path: "exams/2025-03-18/ex1.py" },
-  ]},
-  { group: "2025-08-19", items: [
-    { name: "ex1", path: "TENTOR/2025-08-19/ex1.py" },
-    { name: "ex2", path: "TENTOR/2025-08-19/ex2.py" },
-    { name: "ex3a", path: "TENTOR/2025-08-19/ex3a.py" },
-    { name: "ex3b", path: "TENTOR/2025-08-19/ex3b.py" },
-    { name: "ex4", path: "TENTOR/2025-08-19/ex4.py" },
-    { name: "ex5a", path: "TENTOR/2025-08-19/ex5a.py" },
-    { name: "ex5b", path: "TENTOR/2025-08-19/ex5b.py" },
-    { name: "ex6a", path: "TENTOR/2025-08-19/ex6a.py" },
-    { name: "ex6b", path: "TENTOR/2025-08-19/ex6b.py" },
-  ]},
-  { group: "2026-01-14", items: [
-    { name: "ex1", path: "TENTOR/2026-01-14/ex1.py" },
-    { name: "ex2", path: "TENTOR/2026-01-14/ex2.py" },
-    { name: "ex3", path: "TENTOR/2026-01-14/ex3.py" },
-    { name: "ex4", path: "TENTOR/2026-01-14/ex4.py" },
-    { name: "ex5", path: "TENTOR/2026-01-14/ex5.py" },
-    { name: "ex6a", path: "TENTOR/2026-01-14/ex6a.py" },
-    { name: "ex6b", path: "TENTOR/2026-01-14/ex6b.py" },
-  ]},
-];
+const OWNER = "itsyst";
+const REPO = "python-strudy";
+const BRANCH = "main";
 
 let lastView = "home";
 let currentCode = "";
+let lecturesCache = [];
+let examsCache = []; // { group, items: [{name, path}] }
 
 function $(id) { return document.getElementById(id); }
 
+/* ---------- GitHub API helpers ---------- */
+async function apiList(path) {
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`;
+  const res = await fetch(url, {
+    headers: { Accept: "application/vnd.github+json" }
+  });
+  if (!res.ok) {
+    if (res.status === 403 || res.status === 404) {
+      throw new Error("API_LIMIT_OR_PRIVATE");
+    }
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function loadLectures() {
+  const items = await apiList("lectures");
+  return items
+    .filter(f => f.type === "file" && f.name.endsWith(".py"))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+    .map(f => ({
+      name: prettyName(f.name),
+      path: f.path,
+      icon: "📄"
+    }));
+}
+
+async function loadExams() {
+  const top = await apiList("exams");
+  const dirs = top
+    .filter(f => f.type === "dir")
+    .sort((a, b) => b.name.localeCompare(a.name)); // newest first
+
+  const groups = [];
+  for (const dir of dirs) {
+    const files = await apiList(dir.path);
+    const pyFiles = files
+      .filter(f => f.type === "file" && f.name.endsWith(".py"))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+      .map(f => ({
+        name: f.name.replace(/\.py$/, ""),
+        path: f.path
+      }));
+    if (pyFiles.length) {
+      groups.push({ group: dir.name, items: pyFiles });
+    }
+  }
+  return groups;
+}
+
+function prettyName(filename) {
+  return filename
+    .replace(/\.py$/, "")
+    .replace(/_/g, " ")
+    .replace(/^(\d+)\s/, "$1 · ");
+}
+
+/* ---------- UI ---------- */
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   $(`view-${name}`).classList.add("active");
@@ -65,15 +85,32 @@ function showHome() {
   $("search").value = "";
 }
 
-function showSection(section) {
+async function showSection(section) {
   lastView = section;
   showView(section);
   $("search").value = "";
+  await ensureData();
   renderLists();
 }
 
 function goBack() {
   showSection(lastView === "viewer" ? "home" : lastView);
+}
+
+async function ensureData() {
+  if (lecturesCache.length || examsCache.length) return;
+  try {
+    $("lectures-list").innerHTML = "<p class='loading'>Loading…</p>";
+    $("exams-list").innerHTML = "<p class='loading'>Loading…</p>";
+    lecturesCache = await loadLectures();
+    examsCache = await loadExams();
+  } catch (e) {
+    const msg = e.message === "API_LIMIT_OR_PRIVATE"
+      ? "Could not list files. Make the repo <strong>public</strong> (needed for dynamic listing) or check rate limits."
+      : `Failed to load file list: ${e.message}`;
+    $("lectures-list").innerHTML = `<p class="error">${msg}</p>`;
+    $("exams-list").innerHTML = `<p class="error">${msg}</p>`;
+  }
 }
 
 function renderLists(filter = "") {
@@ -82,28 +119,34 @@ function renderLists(filter = "") {
   // Lectures
   const lecEl = $("lectures-list");
   lecEl.innerHTML = "";
-  lectures
-    .filter(f => !q || f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q))
-    .forEach(f => {
-      lecEl.appendChild(makeFileBtn(f.name, f.path, f.icon || "📄"));
-    });
+  const lecs = lecturesCache.filter(f =>
+    !q || f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q)
+  );
+  if (!lecs.length) {
+    lecEl.innerHTML = "<p class='empty'>No lectures found. Add .py files under <code>lectures/</code> and push.</p>";
+  } else {
+    lecs.forEach(f => lecEl.appendChild(makeFileBtn(f.name, f.path, f.icon)));
+  }
 
   // Exams
   const exEl = $("exams-list");
   exEl.innerHTML = "";
-  exams.forEach(group => {
+  let any = false;
+  examsCache.forEach(group => {
     const items = group.items.filter(f =>
       !q || f.name.toLowerCase().includes(q) || group.group.includes(q) || f.path.toLowerCase().includes(q)
     );
     if (!items.length) return;
+    any = true;
     const title = document.createElement("div");
     title.className = "group-title";
     title.textContent = group.group;
     exEl.appendChild(title);
-    items.forEach(f => {
-      exEl.appendChild(makeFileBtn(f.name, f.path, "📝"));
-    });
+    items.forEach(f => exEl.appendChild(makeFileBtn(f.name, f.path, "📝")));
   });
+  if (!any) {
+    exEl.innerHTML = "<p class='empty'>No exams found. Add folders + .py files under <code>exams/</code> and push.</p>";
+  }
 }
 
 function makeFileBtn(name, path, icon) {
@@ -126,27 +169,26 @@ async function openFile(path, name) {
   currentCode = "";
 
   try {
+    // Relative path → works on GitHub Pages and local Live Server
     const res = await fetch(path);
     if (!res.ok) throw new Error("Not found");
     const text = await res.text();
     currentCode = text;
     $("code-content").innerHTML = highlightPython(text);
   } catch (e) {
-    $("code-content").textContent = `Could not load file:\n${path}\n\nMake sure the file exists in the repository.`;
+    $("code-content").textContent = `Could not load:\n${path}\n\n${e.message}`;
   }
 }
 
 function highlightPython(code) {
-  // very light highlighter
   const escaped = code
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
   return escaped
     .replace(/(#.*)$/gm, '<span class="cmt">$1</span>')
-    .replace(/("[^"]*"|'[^']*')/g, '<span class="str">$1</span>')
-    .replace(/\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|assert|lambda|True|False|None|in|not|and|or|pass|break|continue|raise|yield)\b/g, '<span class="kw">$1</span>')
+    .replace(/("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/g, '<span class="str">$1</span>')
+    .replace(/\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|assert|lambda|True|False|None|in|not|and|or|pass|break|continue|raise|yield|async|await)\b/g, '<span class="kw">$1</span>')
     .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
     .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()/g, '<span class="fn">$1</span>');
 }
@@ -164,20 +206,20 @@ function copyCode() {
   });
 }
 
-// Search
+/* Search */
 $("search").addEventListener("input", (e) => {
   const q = e.target.value;
-  if (document.getElementById("view-lectures").classList.contains("active") ||
-      document.getElementById("view-exams").classList.contains("active")) {
+  const onList =
+    $("view-lectures").classList.contains("active") ||
+    $("view-exams").classList.contains("active");
+  if (onList) {
     renderLists(q);
   } else if (q) {
-    // from home → show both filtered
-    showSection("lectures");
-    renderLists(q);
-    // also show exams section briefly? just switch to lectures for simplicity
+    showSection("lectures").then(() => renderLists(q));
   }
 });
 
-// Init
-renderLists();
+/* Init */
 showHome();
+// Preload in background so first click is fast
+ensureData().then(() => renderLists()).catch(() => {});
