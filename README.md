@@ -1,8 +1,9 @@
 # Python Study 🐍
 
-Student website for **TDDE24** — exams, labs, exercises and seminars.
+**Student website for TDDE24 (Linköping University)**  
+Exams, labs, exercises and seminars — fully dynamic, no hardcoded lists.
 
-**Live:** https://itsyst.github.io/python-strudy/
+🌐 **Live site:** https://itsyst.github.io/python-strudy/
 
 ## Local
 
@@ -35,5 +36,7 @@ git push
 ## GitHub Pages
 
 Settings → Pages → Branch `main` → `/ (root)`
+
+---
 
 © 2026 [itsyst](https://github.com/itsyst)
