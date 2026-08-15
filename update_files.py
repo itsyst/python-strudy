@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Scan content folders → files.json + assets/files.json
+Scan content folders → assets/files.json
 
 Discovers any top-level directory that contains .py / .txt / .md files
 (so adding e.g. lectures/ or projects/ and re-running is enough).
@@ -94,10 +94,10 @@ def main() -> None:
         data[name] = list_section(ROOT / name)
 
     text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-    for out in (ROOT / "files.json", ROOT / "assets" / "files.json"):
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(text, encoding="utf-8")
-        print("OK -", out)
+    out = ROOT / "assets" / "files.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    print("OK -", out)
 
     print(f"Sections: {', '.join(sections) or '(none)'}")
     for key in sections:
