@@ -1,85 +1,107 @@
 {
   "exams": [
     {
-      "group": "tenta__2026_01_14",
+      "group": "tenta_2026_03_17",
       "items": [
         {
           "name": "ex1.py",
-          "path": "exams/tenta__2026_01_14/ex1.py"
+          "path": "exams/tenta_2026_03_17/ex1.py"
         },
         {
           "name": "ex2.py",
-          "path": "exams/tenta__2026_01_14/ex2.py"
+          "path": "exams/tenta_2026_03_17/ex2.py"
+        }
+      ]
+    },
+    {
+      "group": "tenta_2026_01_14",
+      "items": [
+        {
+          "name": "ex1.py",
+          "path": "exams/tenta_2026_01_14/ex1.py"
+        },
+        {
+          "name": "ex2.py",
+          "path": "exams/tenta_2026_01_14/ex2.py"
         },
         {
           "name": "ex3.py",
-          "path": "exams/tenta__2026_01_14/ex3.py"
+          "path": "exams/tenta_2026_01_14/ex3.py"
         },
         {
           "name": "ex4.py",
-          "path": "exams/tenta__2026_01_14/ex4.py"
+          "path": "exams/tenta_2026_01_14/ex4.py"
         },
         {
           "name": "ex5.py",
-          "path": "exams/tenta__2026_01_14/ex5.py"
+          "path": "exams/tenta_2026_01_14/ex5.py"
         },
         {
           "name": "ex6a.py",
-          "path": "exams/tenta__2026_01_14/ex6a.py"
+          "path": "exams/tenta_2026_01_14/ex6a.py"
         },
         {
           "name": "ex6b.py",
-          "path": "exams/tenta__2026_01_14/ex6b.py"
+          "path": "exams/tenta_2026_01_14/ex6b.py"
         }
       ]
     },
     {
-      "group": "tenta__2025_08_19",
+      "group": "tenta_2025_08_19",
       "items": [
         {
           "name": "ex1.py",
-          "path": "exams/tenta__2025_08_19/ex1.py"
+          "path": "exams/tenta_2025_08_19/ex1.py"
         },
         {
           "name": "ex2.py",
-          "path": "exams/tenta__2025_08_19/ex2.py"
+          "path": "exams/tenta_2025_08_19/ex2.py"
         },
         {
           "name": "ex3a.py",
-          "path": "exams/tenta__2025_08_19/ex3a.py"
+          "path": "exams/tenta_2025_08_19/ex3a.py"
         },
         {
           "name": "ex3b.py",
-          "path": "exams/tenta__2025_08_19/ex3b.py"
+          "path": "exams/tenta_2025_08_19/ex3b.py"
         },
         {
           "name": "ex4.py",
-          "path": "exams/tenta__2025_08_19/ex4.py"
+          "path": "exams/tenta_2025_08_19/ex4.py"
         },
         {
           "name": "ex5a.py",
-          "path": "exams/tenta__2025_08_19/ex5a.py"
+          "path": "exams/tenta_2025_08_19/ex5a.py"
         },
         {
           "name": "ex5b.py",
-          "path": "exams/tenta__2025_08_19/ex5b.py"
+          "path": "exams/tenta_2025_08_19/ex5b.py"
         },
         {
           "name": "ex6a.py",
-          "path": "exams/tenta__2025_08_19/ex6a.py"
+          "path": "exams/tenta_2025_08_19/ex6a.py"
         },
         {
           "name": "ex6b.py",
-          "path": "exams/tenta__2025_08_19/ex6b.py"
+          "path": "exams/tenta_2025_08_19/ex6b.py"
         }
       ]
     },
     {
-      "group": "tenta__2025_03_18",
+      "group": "tenta_2025_03_18",
       "items": [
         {
           "name": "ex1.py",
-          "path": "exams/tenta__2025_03_18/ex1.py"
+          "path": "exams/tenta_2025_03_18/ex1.py"
+        }
+      ]
+    },
+    {
+      "group": "tenta_2025_01_14",
+      "items": [
+        {
+          "name": "ex1.py",
+          "path": "exams/tenta_2025_01_14/ex1.py"
         }
       ]
     },
@@ -462,12 +484,12 @@
           "path": "exams/tenta_2016_01_12_/code.py"
         },
         {
-          "name": "kommentarer.txt",
-          "path": "exams/tenta_2016_01_12_/kommentarer.txt"
-        },
-        {
           "name": "solutions.py",
           "path": "exams/tenta_2016_01_12_/solutions.py"
+        },
+        {
+          "name": "tenta_2016_01_12_.txt",
+          "path": "exams/tenta_2016_01_12_/tenta_2016_01_12_.txt"
         }
       ]
     },
@@ -574,8 +596,8 @@
           "path": "exams/tenta_2013_08_21/solutions.py"
         },
         {
-          "name": "tenta.txt",
-          "path": "exams/tenta_2013_08_21/tenta.txt"
+          "name": "tenta_2013_08_21.txt",
+          "path": "exams/tenta_2013_08_21/tenta_2013_08_21.txt"
         },
         {
           "name": "tree.py",
@@ -595,8 +617,8 @@
           "path": "exams/tenta_2013_03_27/solutions.py"
         },
         {
-          "name": "tenta.txt",
-          "path": "exams/tenta_2013_03_27/tenta.txt"
+          "name": "tenta_2013_03_27.txt",
+          "path": "exams/tenta_2013_03_27/tenta_2013_03_27.txt"
         }
       ]
     },
@@ -612,8 +634,8 @@
           "path": "exams/tenta_2012_12_18/solutions.py"
         },
         {
-          "name": "tenta.txt",
-          "path": "exams/tenta_2012_12_18/tenta.txt"
+          "name": "tenta_2012_12_18.txt",
+          "path": "exams/tenta_2012_12_18/tenta_2012_12_18.txt"
         }
       ]
     },
