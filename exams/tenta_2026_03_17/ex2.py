@@ -1,6 +1,5 @@
 import sys
 
-
 def is_mountain_flags(seq: list[int]) -> bool:
     if len(seq) < 3:
         return False
