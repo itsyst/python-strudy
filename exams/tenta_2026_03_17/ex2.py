@@ -1,65 +1,89 @@
-from operator import indexOf
 import sys
 
-def is_mountain(seq: list[int]) -> bool :
-    max_num = 0
-  
+
+def is_mountain_flags(seq: list[int]) -> bool:
     if len(seq) < 3:
         return False
 
-    # for i in range(len(seq)):
-    #     if seq[i] < seq[i+1] or seq[i] > seq[i+1]:
-    #         return False
+    has_increased = False
+    has_decreased = False
 
-    for element in seq:
-        if element > max_num:
-            max_num = element
-     
-    for i in range(seq.index(max_num), seq.index(seq[-1])):
-        print(seq[i])
-        for j in range(0, seq.index(max_num)):
-            print(seq[j])
-            if seq[j] < max_num and max_num > seq[i]:
-                return True
-                
-        
-    return False
+    for i in range(len(seq) - 1):
+        a = seq[i]
+        b = seq[i + 1]
 
+        if a == b:
+            return False
+
+        if a < b:
+            if has_decreased:
+                return False
+            has_increased = True
+        else:
+            has_decreased = True
+
+    return has_increased and has_decreased
+
+
+def is_mountain_top(seq: list[int]) -> bool:
+    if len(seq) < 3:
+        return False
+
+    top = max(seq)
+    top_index = seq.index(top)
+
+    if top_index == 0 or top_index == len(seq) - 1:
+        return False
+
+    for i in range(top_index):
+        if seq[i] >= seq[i + 1]:
+            return False
+
+    for i in range(top_index, len(seq) - 1):
+        if seq[i] <= seq[i + 1]:
+            return False
+
+    return True
+
+
+def test_mountain(method):
+    assert method([1, 3, 5, 4, 2]) is True
+    assert method([0, 10, 5, 2]) is True
+    assert method([1, 2, 2, 3, 1]) is False
+    assert method([1, 2, 3]) is False
+    assert method([3, 2, 1]) is False
+    assert method([1, 3, 2, 4, 1]) is False
+    assert method([]) is False
+    assert method([5]) is False
+
+    # Egna extra tester
+    assert method([1, 2, 1]) is True
+    assert method([2, 1, 2]) is False
+    assert method([1, 3, 3, 2]) is False
+    assert method([1, 4, 3, 2, 1]) is True
 
 
 def check_python_version():
-    # ... färdig kod som kollar att du kör rätt version av Python ...
     print(
-        f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+        f"Python {sys.version_info.major}."
+        f"{sys.version_info.minor}."
+        f"{sys.version_info.micro}"
+    )
 
 
 def run_tests():
-    # De här testerna står uttryckligen som assertions på tentan.
-    print("Kör uppgiftens tester...")
-    assert is_mountain([1, 3, 5, 4, 2]) == True
-    # assert is_mountain([0, 10, 5, 2]) == True
-    # assert is_mountain([1, 2, 2, 3, 1]) == False # Ej strängt växande (2 följt av 2)
-    # assert is_mountain([1, 2, 3]) == False # Saknar avtagande del
-    # assert is_mountain([3, 2, 1]) == False # Saknar växande del
-    # assert is_mountain([1, 3, 2, 4, 1]) == False # Mer än en topp
-    # assert is_mountain([]) == False
-    # assert is_mountain([5]) == False
+    print("Testar is_mountain_flags...")
+    test_mountain(is_mountain_flags)
+    print("is_mountain_flags klarade alla tester.")
 
-    # Här lägger du dina egna tester. Du kan till exempel skapa egna
-    # assertions, eller lägga till andra tester så som enkla utskrifter
-    # av resultatet av en körning.
-    print("*"*40)
-    print("Kör egna tester...")
-    
+    print("*" * 40)
 
-    # Här kan du lägga tester där du inte vet korrekta svar men
-    # ändå kan skriva ut resultatet. Kanske det kraschar, kanske
-    # det är uppenbart fel...
-    print("*"*40)
-    # print(is_mountain([1, 3, 5, 4, 2]))
-     
+    print("Testar is_mountain_top...")
+    test_mountain(is_mountain_top)
+    print("is_mountain_top klarade alla tester.")
 
-    print("Har kört alla tester")
+    print("*" * 40)
+    print("Har kört alla tester.")
 
 
 if __name__ == '__main__':
