@@ -10,6 +10,30 @@
         {
           "name": "ex2.py",
           "path": "exams/tenta_2026_03_17/ex2.py"
+        },
+        {
+          "name": "ex3.py",
+          "path": "exams/tenta_2026_03_17/ex3.py"
+        },
+        {
+          "name": "ex4.py",
+          "path": "exams/tenta_2026_03_17/ex4.py"
+        },
+        {
+          "name": "ex5.py",
+          "path": "exams/tenta_2026_03_17/ex5.py"
+        },
+        {
+          "name": "ex6.py",
+          "path": "exams/tenta_2026_03_17/ex6.py"
+        },
+        {
+          "name": "playground_ex.py",
+          "path": "exams/tenta_2026_03_17/playground_ex.py"
+        },
+        {
+          "name": "playground_test.py",
+          "path": "exams/tenta_2026_03_17/playground_test.py"
         }
       ]
     },
