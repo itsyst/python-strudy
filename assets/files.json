@@ -108,6 +108,14 @@
         {
           "name": "ex6b.py",
           "path": "exams/tenta_2025_08_19/ex6b.py"
+        },
+        {
+          "name": "playground_ex.py",
+          "path": "exams/tenta_2025_08_19/playground_ex.py"
+        },
+        {
+          "name": "playground_test.py",
+          "path": "exams/tenta_2025_08_19/playground_test.py"
         }
       ]
     },
