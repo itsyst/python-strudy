@@ -1,9 +1,13 @@
 # Python Study 🐍
 
-**Student website for TDDE24 (Linköping University)**  
-Exams, labs, exercises and seminars — fully dynamic, no hardcoded lists.
+Student website for **TDDE24** — exams, labs, exercises and seminars.
 
-🌐 **Live site:** https://itsyst.github.io/python-strudy/
+Open any `.py` file to **edit and run it in the browser** (editor + terminal, powered by Pyodide). No local Python install needed.
+
+**Live:** https://itsyst.github.io/python-strudy/
+
+**Discord (lab codes):** https://discord.gg/mR9JByCr7  
+**Support:** [Ko-fi](https://ko-fi.com/itsyst) · [Patreon](https://www.patreon.com/c/itsyst)
 
 ## Local
 
@@ -33,10 +37,13 @@ git commit -m "Add material"
 git push
 ```
 
+## In-browser Python
+
+`.py` files open in a split editor / terminal. **Run** executes the file, the prompt works like a local REPL, and a stdin box feeds `input()`. First load downloads the Python runtime (~10s).
+
 ## GitHub Pages
 
-Settings → Pages → Branch `main` → `/ (root)`
-
----
+Settings → Pages → Branch `main` → `/ (root)`  
+The repository must be **public** on a free GitHub account.
 
 © 2026 [itsyst](https://github.com/itsyst)

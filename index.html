@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Python Study · TDDE24</title>
-  <meta name="description" content="Student materials for TDDE24 — exams, labs, övningar and seminars." />
+  <meta name="description" content="Student materials for TDDE24 — exams, labs, exercises and seminars. Edit and run Python in the browser." />
   <link rel="stylesheet" href="assets/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -30,7 +30,7 @@
       <div class="hero">
         <p class="hero-badge">TDDE24 · Python</p>
         <h1>Python Study Materials</h1>
-        <p class="hero-sub">Exams, labs, exercises and seminars — open any file and read the code in the browser.</p>
+        <p class="hero-sub">Exams, labs, exercises and seminars — open any <code>.py</code> file, edit it, and run it in a browser terminal. No install.</p>
         <div class="hero-cards" id="home-cards"></div>
       </div>
     </section>
@@ -42,10 +42,40 @@
         <button class="tool-btn back-btn" onclick="goBack()" type="button">← Back</button>
         <h2 id="viewer-title" class="viewer-title">File</h2>
         <div class="viewer-actions">
+          <button class="tool-btn run-btn" id="run-btn" onclick="runPlayground()" type="button" hidden>▶ Run</button>
+          <button class="tool-btn" id="reset-btn" onclick="resetPlayground()" type="button" hidden>Reset</button>
           <a id="raw-link" class="tool-btn raw-btn" href="#" target="_blank" rel="noopener">Raw</a>
           <button class="tool-btn copy-btn" onclick="copyCode()" type="button">Copy</button>
         </div>
       </div>
+
+      <div id="playground" class="playground" hidden>
+        <div class="play-grid">
+          <section class="play-pane">
+            <header class="play-label">
+              <span id="editor-name">editor</span>
+              <span class="play-hint">Ctrl+Enter to run</span>
+            </header>
+            <textarea id="code-editor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Python editor"></textarea>
+          </section>
+          <section class="play-pane play-term">
+            <header class="play-label">
+              <span>terminal</span>
+              <span id="py-status" class="play-hint">loading Python…</span>
+            </header>
+            <div id="term-out" class="term-out" aria-live="polite"></div>
+            <form id="repl-form" class="term-input-row" autocomplete="off">
+              <span class="term-prompt">❯</span>
+              <input id="term-in" type="text" autocomplete="off" placeholder="inspect after Run, e.g. add(2, 3)" aria-label="Python terminal input" />
+            </form>
+          </section>
+        </div>
+        <details class="stdin-box" id="stdin-details">
+          <summary>Program input for <code>input()</code> — one line per call</summary>
+          <textarea id="stdin-box" rows="3" spellcheck="false" placeholder="Ada Lovelace" aria-label="Standard input"></textarea>
+        </details>
+      </div>
+
       <pre id="code-block"><code id="code-content"></code></pre>
     </section>
   </main>
@@ -68,9 +98,10 @@
       </div>
 
       <div class="footer-col">
-        <h4>Author</h4>
-        <a href="https://github.com/itsyst" target="_blank" rel="noopener">@itsyst on GitHub</a>
-        <a href="https://github.com/itsyst/python-strudy/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        <h4>Community</h4>
+        <a href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Discord — get lab codes</a>
+        <a href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Support on Ko-fi</a>
+        <a href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Support on Patreon</a>
       </div>
 
       <div class="footer-copy">
@@ -79,7 +110,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>Made for TDDE24 students · Hosted on GitHub Pages</p>
+      <p>Made for TDDE24 students · Hosted on GitHub Pages · Python runs in your browser</p>
     </div>
   </footer>
 
