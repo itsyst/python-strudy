@@ -2,14 +2,16 @@
 
 Student website for **TDDE24** — exams, labs, exercises and seminars.
 
-Open any `.py` file to **edit and run it in the browser** (editor + terminal, powered by Pyodide). No local Python install needed.
+Open any `.py` file to **edit and run it in the browser** (editor + terminal). No local Python install needed. No Node, npm, or Vite.
 
 **Live:** https://itsyst.github.io/python-strudy/
 
 **Discord (lab codes):** https://discord.gg/mR9JByCr7  
 **Support:** [Ko-fi](https://ko-fi.com/itsyst) · [Patreon](https://www.patreon.com/c/itsyst)
 
-## Local
+## Local (static site — do not run Vite)
+
+This repo is only HTML + JS. **Do not** run `npx vite`, `npm install`, or `npm run dev`. Those tools belong to a different kind of project and will fail on this one.
 
 ```bash
 git pull
@@ -17,7 +19,13 @@ python update_files.py    # refresh file list after adding files / folders
 python -m http.server 8000
 ```
 
-Open http://localhost:8000
+Then open http://localhost:8000 in your browser.
+
+On Windows PowerShell:
+
+```powershell
+python -m http.server 8000
+```
 
 ## Folders
 
