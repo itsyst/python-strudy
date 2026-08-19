@@ -173,6 +173,13 @@ body {
   max-width: 36rem;
   margin: 0 auto 1.75rem;
 }
+.hero-sub code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--surface-2);
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+}
 
 .hero-cards {
   display: grid;
@@ -269,7 +276,7 @@ body {
   font-size: 0.9rem;
   flex-shrink: 0;
 }
-.file-item .meta { overflow: hidden; min-width: 0; }
+.file-item .meta { overflow: hidden; min-width: 0; flex: 1; }
 .file-item .name {
   font-weight: 600;
   font-size: 0.9rem;
@@ -283,6 +290,17 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.file-item .run-chip {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0b1120;
+  background: var(--accent);
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
 }
 
 .group-title {
@@ -361,6 +379,16 @@ body {
   border-color: var(--success);
   color: var(--success);
 }
+.tool-btn.run-btn {
+  background: var(--accent);
+  color: #0b1120;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.tool-btn.run-btn:hover {
+  color: #0b1120;
+  filter: brightness(1.05);
+}
 
 #code-block {
   background: var(--surface);
@@ -379,6 +407,122 @@ body {
 .cmt { color: #64748b; font-style: italic; }
 .num { color: #fbbf24; }
 .fn { color: #22d3ee; }
+
+/* ---- Playground ---- */
+.playground { margin-top: 0.25rem; }
+.play-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.play-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.play-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+.play-hint { font-weight: 500; }
+.play-hint.ok { color: var(--success); }
+
+#code-editor {
+  flex: 1;
+  min-height: 260px;
+  width: 100%;
+  border: 0;
+  resize: vertical;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  padding: 0.85rem 1rem;
+  outline: none;
+}
+
+.play-term { background: #080d16; }
+.term-out {
+  flex: 1;
+  min-height: 200px;
+  overflow: auto;
+  padding: 0.75rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.term-out pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0 0 0.15rem;
+}
+.term-out .t-err { color: var(--danger); }
+.term-out .t-sys { color: var(--text-muted); }
+.term-out .t-in { color: var(--accent); }
+.term-out .t-out { color: var(--text); }
+
+.term-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-top: 1px solid var(--border);
+  padding: 0.45rem 0.8rem;
+}
+.term-prompt {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 700;
+}
+#term-in {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  outline: none;
+}
+#term-in::placeholder { color: var(--text-muted); }
+
+.stdin-box {
+  margin-top: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.9rem;
+}
+.stdin-box summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+.stdin-box textarea {
+  margin-top: 0.55rem;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #080d16;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  padding: 0.55rem 0.7rem;
+  resize: vertical;
+  outline: none;
+}
 
 /* ---- Footer ---- */
 .site-footer {
@@ -463,6 +607,8 @@ body {
     grid-template-columns: 1fr 1fr;
   }
   .footer-copy { text-align: left; grid-column: 1 / -1; }
+  .play-grid { grid-template-columns: 1fr; }
+  .play-pane { min-height: 240px; }
 }
 
 @media (max-width: 768px) {
