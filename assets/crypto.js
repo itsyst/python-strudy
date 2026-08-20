@@ -374,85 +374,76 @@
     return { ok: true, gate: exported.gate };
   }
 
-  const GH_KEY = "ps.v1.gh";
   const OWNER = "itsyst";
   const REPO = "python-strudy";
   const ISSUED_PATH = "assets/issued.json";
 
-  function githubHeaders(token) {
-    return {
-      Accept: "application/vnd.github+json",
-      Authorization: "Bearer " + token,
-      "X-GitHub-Api-Version": "2022-11-28",
-    };
-  }
+  /* ---------- Teacher backend (no browser tokens) ---------- */
+  let apiBaseCache = null;
 
-  function githubSession() {
+  async function getApiBase() {
+    if (apiBaseCache !== null) return apiBaseCache;
     try {
-      return JSON.parse(sessionStorage.getItem(GH_KEY) || "null");
+      const res = await fetch("assets/teacher-api.json", { cache: "no-store" });
+      if (!res.ok) {
+        apiBaseCache = "";
+        return "";
+      }
+      const data = await res.json();
+      apiBaseCache = String(data.apiBase || "").replace(/\/$/, "");
+      return apiBaseCache;
     } catch (_) {
-      return null;
+      apiBaseCache = "";
+      return "";
     }
   }
 
-  function githubSignOut() {
-    sessionStorage.removeItem(GH_KEY);
+  async function teacherLoginUrl() {
+    const base = await getApiBase();
+    if (!base) throw new Error("Teacher backend not configured (assets/teacher-api.json).");
+    const next = encodeURIComponent(location.href.split("?")[0]);
+    return base + "/auth/github?next=" + next;
+  }
+
+  async function teacherSession() {
+    const base = await getApiBase();
+    if (!base) return { ok: false, error: "Backend not configured." };
+    try {
+      const res = await fetch(base + "/api/session", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (res.status === 401) return { ok: false, error: "" };
+      if (!res.ok) return { ok: false, error: "Session check failed." };
+      const data = await res.json();
+      if (!data.ok || !data.login) return { ok: false, error: "" };
+      return { ok: true, login: data.login, name: data.name || data.login, avatar: data.avatar || "" };
+    } catch (e) {
+      return { ok: false, error: "Cannot reach teacher backend. Is it deployed?" };
+    }
+  }
+
+  async function teacherLogout() {
+    const base = await getApiBase();
     sessionStorage.removeItem("ps.v1.lastcodes");
-  }
-
-  async function githubMe(token) {
-    const r = await fetch("https://api.github.com/user", { headers: githubHeaders(token) });
-    if (r.status === 401) throw new Error("GitHub token is invalid or expired.");
-    if (!r.ok) throw new Error("GitHub user lookup failed.");
-    return r.json();
-  }
-
-  async function githubRepo(token) {
-    const r = await fetch("https://api.github.com/repos/" + OWNER + "/" + REPO, {
-      headers: githubHeaders(token),
-    });
-    if (!r.ok) throw new Error("Cannot read the python-strudy repository.");
-    return r.json();
-  }
-
-  async function githubSignIn(token) {
-    token = String(token || "").trim();
-    if (!token) return { ok: false, error: "Paste a GitHub token." };
-    let user;
+    if (!base) return;
     try {
-      user = await githubMe(token);
-    } catch (e) {
-      return { ok: false, error: e.message };
-    }
-    if (String(user.login || "").toLowerCase() !== OWNER) {
-      return {
-        ok: false,
-        error: "Signed in as @" + user.login + ". Only the repo owner @" + OWNER + " can open the teacher desk.",
-      };
-    }
-    let repo;
-    try {
-      repo = await githubRepo(token);
-    } catch (e) {
-      return { ok: false, error: e.message };
-    }
-    const repoOwner = String((repo.owner && repo.owner.login) || "").toLowerCase();
-    if (repoOwner !== OWNER) {
-      return { ok: false, error: "This token does not belong to the repository owner." };
-    }
-    const perm = (repo.permissions && (repo.permissions.admin || repo.permissions.maintain)) || repo.owner.login.toLowerCase() === OWNER;
-    if (!perm) {
-      return { ok: false, error: "Owner permission required on python-strudy." };
-    }
-    const sess = {
-      login: user.login,
-      name: user.name || user.login,
-      avatar: user.avatar_url || "",
-      token: token,
-      at: Date.now(),
+      await fetch(base + "/api/logout", { method: "POST", credentials: "include" });
+    } catch (_) {}
+  }
+
+  /* Browser must never hold a GitHub token. These stubs reject any attempt. */
+  function githubSession() {
+    return null;
+  }
+  function githubSignOut() {
+    teacherLogout();
+  }
+  async function githubSignIn() {
+    return {
+      ok: false,
+      error: "Personal access tokens are disabled. Deploy teacher-server and sign in with GitHub OAuth.",
     };
-    sessionStorage.setItem(GH_KEY, JSON.stringify(sess));
-    return { ok: true, session: sess };
   }
 
   async function loadIssuedPublic() {
@@ -466,51 +457,31 @@
     }
   }
 
-  function b64utf8(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
-  async function publishIssued(token, issued) {
-    const url = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + ISSUED_PATH;
-    const get = await fetch(url, { headers: githubHeaders(token) });
-    const current = get.ok ? await get.json() : {};
-    const body = JSON.stringify({ issued: issued }, null, 2) + "\n";
-    const put = await fetch(url, {
-      method: "PUT",
-      headers: Object.assign({ "Content-Type": "application/json" }, githubHeaders(token)),
-      body: JSON.stringify({
-        message: "Issue lab passcodes",
-        content: b64utf8(body),
-        sha: current.sha,
-      }),
-    });
-    if (!put.ok) {
-      const t = await put.text();
-      throw new Error("Could not publish codes to GitHub (" + put.status + "). Use a token with Contents: Write. " + t.slice(0, 180));
+  async function generateOwnerCodes(count) {
+    const base = await getApiBase();
+    if (!base) {
+      return { ok: false, error: "Teacher backend not configured (set apiBase in teacher-api.json)." };
     }
-    return put.json();
-  }
-
-  async function generateOwnerCodes(token, count) {
-    const auth = await githubSignIn(token);
-    if (!auth.ok) return auth;
     count = Math.max(1, Math.min(20, Number(count) || 1));
-    const now = Date.now();
-    const fresh = [];
-    for (let i = 0; i < count; i++) fresh.push(await mintCode(now));
-    const existing = await loadIssuedPublic();
-    const merged = existing
-      .filter(function (x) { return x && x.hash && now <= (x.expires || 0); })
-      .concat(fresh.map(function (c) {
-        return { hash: c.hash, expires: c.expires, at: now };
-      }));
     try {
-      await publishIssued(token, merged);
+      const res = await fetch(base + "/api/codes", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: count }),
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok) {
+        return { ok: false, error: data.error || "Code generation failed (" + res.status + ")." };
+      }
+      const codes = Array.isArray(data.codes) ? data.codes : [];
+      sessionStorage.setItem("ps.v1.lastcodes", JSON.stringify(codes));
+      return { ok: true, codes: codes };
     } catch (e) {
-      return { ok: false, error: e.message };
+      return { ok: false, error: "Cannot reach teacher backend: " + (e.message || "network error") };
     }
-    sessionStorage.setItem("ps.v1.lastcodes", JSON.stringify(fresh));
-    return { ok: true, codes: fresh };
   }
 
   async function listIssuedPublic() {
@@ -521,11 +492,11 @@
     return { ok: true, codes: rows };
   }
 
-  async function generateCodes(pinOrToken, count) {
-    if (/^(ghp_|github_pat_)/.test(String(pinOrToken || ""))) {
-      return generateOwnerCodes(pinOrToken, count);
-    }
-    return { ok: false, error: "Sign in with GitHub as @" + OWNER + " to generate codes." };
+  async function generateCodes() {
+    return {
+      ok: false,
+      error: "Sign in with GitHub via the teacher backend to generate codes. Browser tokens are disabled.",
+    };
   }
 
   async function listVault() {
@@ -688,6 +659,10 @@
     githubSession: githubSession,
     generateOwnerCodes: generateOwnerCodes,
     listIssuedPublic: listIssuedPublic,
+    getApiBase: getApiBase,
+    teacherLoginUrl: teacherLoginUrl,
+    teacherSession: teacherSession,
+    teacherLogout: teacherLogout,
     probeDevice: probeDevice,
     confirmDevice: confirmDevice,
     deviceConfirmed: deviceConfirmed,
