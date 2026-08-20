@@ -10,7 +10,8 @@ from typing import Any
 
 import jwt
 import requests
-from flask import Flask, jsonify, redirect, request, session
+from pathlib import Path as _Path
+from flask import Flask, jsonify, redirect, request, session, send_from_directory
 
 
 def _env(name: str, default: str = "") -> str:
@@ -37,6 +38,7 @@ APP_ID = _env("GITHUB_APP_ID")
 PRIVATE_KEY_PEM = _env("GITHUB_PRIVATE_KEY").replace("\\n", "\n")
 
 ISSUED_PATH = "assets/issued.json"
+HERE = _Path(__file__).resolve().parent
 TTL_MS = 3 * 24 * 60 * 60 * 1000
 ALPH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 PEPPER = "TDDE24|python-strudy|lab-gate|2026"
@@ -208,6 +210,14 @@ def require_teacher() -> bool:
 def _oauth_redirect_uri() -> str:
     base = PUBLIC_BASE_URL or request.url_root.rstrip("/")
     return f"{base}/auth/callback"
+
+
+
+@app.get("/desk")
+@app.get("/admin")
+@app.get("/admin.html")
+def desk():
+    return send_from_directory(HERE, "desk.html")
 
 
 @app.get("/")
