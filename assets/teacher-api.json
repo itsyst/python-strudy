@@ -1,4 +1,4 @@
 {
   "apiBase": "https://ps-teacher-live.vercel.app/",
-  "note": "Set apiBase to your deployed teacher-server URL, e.g. https://python-strudy-teacher.onrender.com — leave empty until the backend is deployed."
+  "note": "Set apiBase to your deployed teacher-server URL."
 }
