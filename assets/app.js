@@ -1,13 +1,30 @@
 /* Python Study – dynamic site + in-browser Python playground */
 
 const KNOWN_META = {
-  exams: { title: "Exams", icon: "📝", desc: "Past tentor by date — edit & run" },
-  labs: { title: "Labs", icon: "🔬", desc: "Labbar — locked until a Discord passcode" },
-  exercises: { title: "Exercises", icon: "✏️", desc: "Practice exercises — edit & run" },
-  seminars: { title: "Seminars", icon: "💬", desc: "Seminar examples — edit & run" },
-  lectures: { title: "Lectures", icon: "📚", desc: "Lecture notes & code" },
-  projects: { title: "Projects", icon: "🚀", desc: "Project materials" },
+  exams: { title: "Exams", icon: "exams", desc: "Past tentor by date — edit and run" },
+  labs: { title: "Labs", icon: "labs", desc: "Labbar — locked until a Discord passcode" },
+  exercises: { title: "Exercises", icon: "exercises", desc: "Practice exercises — edit and run" },
+  seminars: { title: "Seminars", icon: "seminars", desc: "Seminar examples — edit and run" },
+  lectures: { title: "Lectures", icon: "exams", desc: "Lecture notes and code" },
+  projects: { title: "Projects", icon: "exams", desc: "Project materials" },
 };
+
+const ICON_SVG = {
+  exams:
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  labs:
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6M10 9h4M10 3v6L6.2 18.2A2 2 0 0 0 8 21h8a2 2 0 0 0 1.8-2.8L14 9V3"/></svg>',
+  exercises:
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+  seminars:
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  lock:
+    '<svg class="lock-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+};
+
+function iconSvg(key) {
+  return ICON_SVG[key] || ICON_SVG.exams;
+}
 
 const PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.27.5/full/";
 
@@ -30,7 +47,7 @@ function $(id) {
 function metaFor(key) {
   if (KNOWN_META[key]) return KNOWN_META[key];
   const title = key.charAt(0).toUpperCase() + key.slice(1).replace(/[-_]/g, " ");
-  return { title, icon: "📁", desc: title + " materials" };
+  return { title: title, icon: "exams", desc: title + " materials" };
 }
 
 async function loadData() {
@@ -166,10 +183,7 @@ function buildUI() {
       btn.dataset.view = sec;
       btn.textContent = m.title;
       if (sec === "labs") {
-        btn.insertAdjacentHTML(
-          "beforeend",
-          '<svg class="lock-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
-        );
+        btn.insertAdjacentHTML("beforeend", ICON_SVG.lock);
       }
       btn.onclick = function () { showSection(sec); };
       nav.appendChild(btn);
@@ -186,7 +200,7 @@ function buildUI() {
       section.className = "view";
       section.innerHTML =
         '<header class="section-header">' +
-        "<h2>" + m.icon + " " + m.title + "</h2>" +
+        "<h2>" + m.title + "</h2>" +
         "<p>" + m.desc + "</p>" +
         "</header>" +
         '<div id="' + sec + '-list" class="file-grid"></div>' +
@@ -215,12 +229,14 @@ async function renderHome() {
     card.onclick = function () { showSection(sec); };
     const locked = sec === "labs" && !labsOpen;
     card.innerHTML =
-      '<div class="card-icon">' + m.icon + "</div>" +
-      "<h3>" + m.title + (locked ? ' <svg class="lock-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>' : "") + "</h3>" +
-      "<p>" + m.desc + "</p>" +
-      '<span class="count">' +
-      (locked ? "Discord passcode" : n ? n + " files" : "Open →") +
-      "</span>";
+      '<div class="card-top">' +
+      '<span class="card-icon">' + iconSvg(m.icon) + "</span>" +
+      (locked
+        ? '<span class="card-lock">' + ICON_SVG.lock + " Discord</span>"
+        : '<span class="count">' + (n ? n + " files" : "Open") + "</span>") +
+      "</div>" +
+      "<h3>" + m.title + "</h3>" +
+      "<p>" + m.desc + "</p>";
     box.appendChild(card);
   });
 }
@@ -281,20 +297,16 @@ function makeFileBtn(name, path) {
   btn.className = "file-item";
   btn.type = "button";
   const isPy = /\.py$/i.test(path);
-  const icon = path.endsWith(".md")
-    ? "📘"
-    : path.endsWith(".txt")
-    ? "📃"
-    : "📄";
+  const ext = (name.split(".").pop() || "file").slice(0, 3).toLowerCase();
   btn.innerHTML =
     '<div class="icon">' +
-    icon +
+    escapeHtml(ext) +
     '</div><div class="meta"><div class="name">' +
     escapeHtml(name) +
     '</div><div class="path">' +
     escapeHtml(path) +
     "</div></div>" +
-    (isPy ? '<span class="run-chip">▶ Run</span>' : "");
+    (isPy ? '<span class="run-chip">Run</span>' : "");
   btn.onclick = function () {
     openFile(path, name);
   };
@@ -323,20 +335,22 @@ function renderLabsLock() {
   lock.hidden = false;
   lock.innerHTML =
     '<div class="lock-card">' +
+    '<div class="lock-mark">' + ICON_SVG.lock + "</div>" +
     "<h3>Labs are locked</h3>" +
     "<p>Join Discord for a one-time passcode. Each code works once on this device and IP, then it is erased. Unused codes expire after 3 days.</p>" +
-    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Join Discord</a>' +
+    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Join Discord to get a passcode</a>' +
     '<form id="lab-unlock-form" class="unlock-form" autocomplete="off">' +
-    '<label class="field">Passcode' +
-    '<input id="lab-code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH" aria-label="Lab passcode" required />' +
+    '<label class="field">One-time passcode' +
+    '<input id="lab-code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" aria-label="Lab passcode" required />' +
     "</label>" +
     '<p class="form-error" id="lab-err" hidden></p>' +
-    '<button class="tool-btn run-btn" type="submit">Unlock labs</button>' +
+    '<button class="tool-btn run-btn" type="submit">Unlock Labs</button>' +
     "</form>" +
-    '<p class="support-line">Keep the materials free:' +
-    ' <a href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Ko-fi</a> ·' +
-    ' <a href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Patreon</a></p>' +
-    "</div>";
+    '<div class="support-box"><p>Labs take time to prepare. If they help you, a coffee keeps them coming.</p>' +
+    '<div class="btn-row">' +
+    '<a class="tool-btn" href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Ko-fi</a>' +
+    '<a class="tool-btn" href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Patreon</a>' +
+    "</div></div></div>";
   const form = $("lab-unlock-form");
   if (form) {
     form.addEventListener("submit", async function (e) {
@@ -741,7 +755,8 @@ function printHelp() {
   termLine(
     "sys",
     "Terminal (like a local shell)\n" +
-      "  ls                  files in this folder\n" +
+      "  ls                  list files in this folder\n" +
+      "  clear               clear the terminal\n" +
       "  python labb_8a.py   run a file\n" +
       "  uppgift 8a          jump to a matching lab/exam file\n" +
       "  help                this text\n" +
@@ -805,9 +820,13 @@ async function runRepl(src) {
   running = true;
   try {
     await warmupPyodide();
+    const t = src.trim();
+    if (/^(clear|cls)$/i.test(t)) {
+      termClear();
+      return;
+    }
     termLine("in", "❯ " + src);
     bindIO(($("stdin-box") && $("stdin-box").value) || "");
-    const t = src.trim();
     if (/^(help|\?)$/i.test(t)) {
       printHelp();
       return;
