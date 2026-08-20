@@ -8,6 +8,15 @@
   <link rel="stylesheet" href="assets/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    a.tool-btn.run-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: inherit;
+    }
+  </style>
 </head>
 <body>
   <header class="navbar" role="navigation">
@@ -69,7 +78,7 @@
       }
       const sess = await PSCrypto.teacherSession();
       if (!sess.ok) {
-        renderLogin(queryErr() || sess.error || "");
+        await renderLogin(queryErr() || sess.error || "");
         return;
       }
       renderDesk(sess);
@@ -84,17 +93,14 @@
             Deploy <code>teacher-server/</code> (GitHub OAuth + GitHub App), then set
             <code>apiBase</code> in <code>assets/teacher-api.json</code>.
           </p>
-          <ol class="muted" style="padding-left:1.2rem;display:grid;gap:0.4rem;margin:0 0 1rem">
-            <li>Follow <code>teacher-server/README.md</code>.</li>
-            <li>Create the GitHub App (Contents: read/write) and install it only on this repo.</li>
-            <li>Create the OAuth App (scope <code>read:user</code>).</li>
-            <li>Deploy the Flask app and put its URL into <code>teacher-api.json</code>.</li>
-          </ol>
-          <p class="muted">Until then the desk stays locked. Revoke any old PATs you may have created.</p>
         </div>`;
     }
 
-    function renderLogin(errText) {
+    async function renderLogin(errText) {
+      let href = "https://python-strudy-backend.vercel.app/auth/github";
+      try {
+        href = await PSCrypto.teacherLoginUrl();
+      } catch (_) {}
       $("admin-panel").innerHTML = `
         <div class="admin-card" id="login-card">
           <h2>Sign in with GitHub</h2>
@@ -103,21 +109,8 @@
             No token is ever pasted or stored in this browser.
           </p>
           <p class="form-error" id="err" ${errText ? "" : "hidden"}>${errText || ""}</p>
-          <button class="tool-btn run-btn" type="button" id="github-login">
-            Sign in with GitHub
-          </button>
+          <a class="tool-btn run-btn" id="github-login" href="${href}">Sign in with GitHub</a>
         </div>`;
-      $("github-login").onclick = async () => {
-        const err = $("err");
-        err.hidden = true;
-        try {
-          const url = await PSCrypto.teacherLoginUrl();
-          window.location.href = url;
-        } catch (e) {
-          err.hidden = false;
-          err.textContent = e.message || "Could not start login.";
-        }
-      };
     }
 
     async function renderDesk(sess) {
