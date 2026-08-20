@@ -6,7 +6,7 @@ Student website for **TDDE24**. Live: https://itsyst.github.io/python-strudy/
 
 If this helps you, please **star the repo** ★ — it keeps the project visible and motivates updates.
 
-First visit: confirm **IP + device ID** (browsers cannot read a MAC address). Labs stay locked until a Discord passcode. Lab **source files are not in this public repo**. They live in the private `itsyst/python-strudy-labs` repository and are served only after a one-time Discord passcode, via the teacher backend.
+First visit: confirm **IP + device ID** (browsers cannot read a MAC address). Labs stay locked until a Discord passcode. Lab files are not listed in this public repo. On the website they unlock only after a one-time Discord passcode.
 
 ```powershell
 cd python-strudy
