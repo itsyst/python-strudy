@@ -1,4 +1,4 @@
 {
-  "apiBase": "https://python-strudy-backend.vercel.app",
-  "note": "Deployed teacher-server URL"
+  "apiBase": "",
+  "note": "Backend URL is not stored in this repo. Teacher desk runs on the Vercel app at /desk (PUBLIC_BASE_URL)."
 }
