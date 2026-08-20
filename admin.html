@@ -28,8 +28,8 @@
       <p class="hero-badge">Teacher desk</p>
       <h1>Lab passcodes</h1>
       <p class="hero-sub" style="margin-left:0;text-align:left">
-        Only the GitHub owner <strong>@itsyst</strong>, signed in to GitHub, can generate lab codes.
-        Students and other GitHub users cannot open this desk.
+        Only the GitHub owner <strong>@itsyst</strong>, signed in via the teacher backend, can generate lab codes.
+        No personal access tokens are ever stored in the browser.
       </p>
 
       <div id="admin-panel" class="admin-grid"></div>
@@ -38,83 +38,101 @@
 
   <footer class="site-footer">
     <div class="footer-bottom">
-      <p>Teacher desk: GitHub owner @itsyst only</p>
+      <p>Teacher desk: GitHub owner @itsyst only · tokens never leave the server</p>
     </div>
   </footer>
 
   <script src="assets/crypto.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    const TOKEN_URL = "https://github.com/settings/tokens/new?scopes=repo&description=python-strudy-teacher";
 
     function fmt(ts) {
       if (!ts) return "—";
       return new Date(ts).toLocaleString();
     }
 
-    function sess() {
-      return PSCrypto.githubSession();
+    function queryErr() {
+      const p = new URLSearchParams(location.search);
+      if (p.get("err") === "forbidden") {
+        const who = p.get("login") || "someone else";
+        history.replaceState({}, "", location.pathname);
+        return "Signed in as @" + who + ". Only @itsyst is allowed.";
+      }
+      return "";
     }
 
     async function render() {
-      const s = sess();
-      if (!s || !s.token) {
-        renderLogin();
+      const api = await PSCrypto.getApiBase();
+      if (!api) {
+        renderSetup();
         return;
       }
-      const check = await PSCrypto.githubSignIn(s.token);
-      if (!check.ok) {
-        PSCrypto.githubSignOut();
-        renderLogin(check.error);
+      const sess = await PSCrypto.teacherSession();
+      if (!sess.ok) {
+        renderLogin(queryErr() || sess.error || "");
         return;
       }
-      renderDesk();
+      renderDesk(sess);
+    }
+
+    function renderSetup() {
+      $("admin-panel").innerHTML = `
+        <div class="admin-card">
+          <h2>Backend not configured</h2>
+          <p class="muted">
+            Personal access tokens are no longer accepted in the browser.
+            Deploy <code>teacher-server/</code> (GitHub OAuth + GitHub App), then set
+            <code>apiBase</code> in <code>assets/teacher-api.json</code>.
+          </p>
+          <ol class="muted" style="padding-left:1.2rem;display:grid;gap:0.4rem;margin:0 0 1rem">
+            <li>Follow <code>teacher-server/README.md</code>.</li>
+            <li>Create the GitHub App (Contents: read/write) and install it only on this repo.</li>
+            <li>Create the OAuth App (scope <code>read:user</code>).</li>
+            <li>Deploy the Flask app and put its URL into <code>teacher-api.json</code>.</li>
+          </ol>
+          <p class="muted">Until then the desk stays locked. Revoke any old PATs you may have created.</p>
+        </div>`;
     }
 
     function renderLogin(errText) {
       $("admin-panel").innerHTML = `
-        <form class="admin-card" id="login-form">
+        <div class="admin-card" id="login-card">
           <h2>Sign in with GitHub</h2>
-          <p class="muted">You must be logged into GitHub as <strong>@itsyst</strong> (owner of python-strudy). Anyone else is rejected.</p>
-          <ol class="muted" style="padding-left:1.2rem;display:grid;gap:0.4rem;margin:0 0 1rem">
-            <li>Open GitHub and stay signed in as <strong>itsyst</strong>.</li>
-            <li>Create a token with the <code>repo</code> scope (Contents write).</li>
-            <li>Paste it here. It stays in this browser tab only.</li>
-          </ol>
-          <a class="tool-btn run-btn discord-btn" href="${TOKEN_URL}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.7 7.7 0 0 1 8 4.77a7.7 7.7 0 0 1 2.01.27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-            Open GitHub token page
-          </a>
-          <label class="field">GitHub token
-            <input type="password" id="gh-token" autocomplete="off" spellcheck="false" required placeholder="ghp_… or github_pat_…" />
-          </label>
+          <p class="muted">
+            You will be redirected to GitHub. Only account <strong>@itsyst</strong> is accepted.
+            No token is ever pasted or stored in this browser.
+          </p>
           <p class="form-error" id="err" ${errText ? "" : "hidden"}>${errText || ""}</p>
-          <button class="tool-btn run-btn" type="submit">Unlock as @itsyst</button>
-        </form>`;
-      $("login-form").onsubmit = async (e) => {
-        e.preventDefault();
+          <button class="tool-btn run-btn" type="button" id="github-login">
+            Sign in with GitHub
+          </button>
+        </div>`;
+      $("github-login").onclick = async () => {
         const err = $("err");
         err.hidden = true;
-        const res = await PSCrypto.githubSignIn($("gh-token").value);
-        if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
-        renderDesk();
+        try {
+          const url = await PSCrypto.teacherLoginUrl();
+          window.location.href = url;
+        } catch (e) {
+          err.hidden = false;
+          err.textContent = e.message || "Could not start login.";
+        }
       };
     }
 
-    async function renderDesk() {
-      const s = sess();
+    async function renderDesk(sess) {
       const listed = await PSCrypto.listIssuedPublic();
       const rows = (listed.ok ? listed.codes : []).slice().reverse();
       const last = JSON.parse(sessionStorage.getItem("ps.v1.lastcodes") || "[]");
       $("admin-panel").innerHTML = `
         <div class="admin-card">
-          <h2>Signed in as @${s.login}</h2>
-          <p class="muted">Repo owner of itsyst/python-strudy. Codes are published to GitHub as hashes so students cannot invent their own.</p>
+          <h2>Signed in as @${sess.login}</h2>
+          <p class="muted">Repo owner of itsyst/python-strudy. Codes are published as hashes only — the browser never holds a GitHub token.</p>
           <button class="tool-btn" type="button" id="lock-btn">Sign out</button>
         </div>
         <form class="admin-card" id="mint-form">
           <h2>Generate codes</h2>
-          <p class="muted">Published to <code>assets/issued.json</code> in your repo, then post the codes in Discord.</p>
+          <p class="muted">Published to <code>assets/issued.json</code> via the GitHub App, then share the codes on Discord.</p>
           <label class="field">How many
             <input type="number" id="count" min="1" max="20" value="5" />
           </label>
@@ -137,15 +155,22 @@
           }</ul>
         </div>`;
 
-      $("lock-btn").onclick = () => { PSCrypto.githubSignOut(); renderLogin(); };
+      $("lock-btn").onclick = async () => {
+        await PSCrypto.teacherLogout();
+        renderLogin();
+      };
       $("mint-form").onsubmit = async (e) => {
         e.preventDefault();
         const err = $("err");
         err.hidden = true;
-        const res = await PSCrypto.generateOwnerCodes(s.token, $("count").value);
-        if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
+        const res = await PSCrypto.generateOwnerCodes(Number($("count").value));
+        if (!res.ok) {
+          err.hidden = false;
+          err.textContent = res.error || "Code generation failed.";
+          return;
+        }
         sessionStorage.setItem("ps.v1.lastcodes", JSON.stringify(res.codes));
-        renderDesk();
+        renderDesk(sess);
       };
       $("copy-live").onclick = () => {
         const text = last.map((c) => c.code).join("\n");
