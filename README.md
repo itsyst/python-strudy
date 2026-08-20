@@ -11,7 +11,7 @@ python update_files.py
 python -m http.server 8000
 ```
 
-Teacher: [admin.html](https://itsyst.github.io/python-strudy/admin.html) — PIN hash lives in `assets/teacher-gate.json` (not created in the browser). To reset: unlock, download a new hash file, replace that file in the repo, and push.
+Teacher: [admin.html](https://itsyst.github.io/python-strudy/admin.html) — only GitHub user **@itsyst** (repo owner). Sign in with a GitHub token; generated codes are published as hashes in `assets/issued.json`. Other GitHub accounts are rejected.
 
 Rebuild the labs vault after adding lab files:
 
