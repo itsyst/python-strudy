@@ -329,6 +329,53 @@ def api_logout():
     return jsonify({"ok": True})
 
 
+@app.get("/api/issued")
+def api_issued():
+    if not require_teacher():
+        return jsonify({"ok": False, "error": "Sign in required."}), 401
+    now = int(time.time() * 1000)
+    try:
+        token = _installation_token()
+        existing, _sha = _get_issued(token)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 502
+    live = [
+        x
+        for x in existing
+        if isinstance(x, dict) and x.get("hash") and now <= int(x.get("expires") or 0)
+    ]
+    return jsonify({"ok": True, "codes": live})
+
+
+@app.post("/api/codes/revoke")
+def api_revoke():
+    if not require_teacher():
+        return jsonify({"ok": False, "error": f"Forbidden — only @{TEACHER_LOGIN} can revoke codes."}), 403
+    body = request.get_json(silent=True) or {}
+    hashes = body.get("hashes") or []
+    if body.get("hash"):
+        hashes = list(hashes) + [body.get("hash")]
+    hashes = {str(h).strip().lower() for h in hashes if h}
+    all_of = bool(body.get("all"))
+    now = int(time.time() * 1000)
+    try:
+        token = _installation_token()
+        existing, sha = _get_issued(token)
+        kept = []
+        for x in existing:
+            if not isinstance(x, dict) or not x.get("hash"):
+                continue
+            if now > int(x.get("expires") or 0):
+                continue
+            if all_of or str(x.get("hash") or "").lower() in hashes:
+                continue
+            kept.append(x)
+        _put_issued(token, kept, sha)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 502
+    return jsonify({"ok": True, "codes": kept})
+
+
 @app.post("/api/codes")
 def api_codes():
     if not require_teacher():
@@ -357,7 +404,11 @@ def api_codes():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 502
     return jsonify(
-        {"ok": True, "codes": [{"code": c["code"], "expires": c["expires"]} for c in fresh]}
+        {
+            "ok": True,
+            "codes": [{"code": c["code"], "expires": c["expires"], "hash": c["hash"]} for c in fresh],
+            "issued": merged,
+        }
     )
 
 
