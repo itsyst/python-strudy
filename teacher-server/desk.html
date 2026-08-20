@@ -21,12 +21,12 @@
 <body>
   <header class="navbar" role="navigation">
     <div class="nav-inner">
-      <a class="nav-brand" href="https://itsyst.github.io/python-strudy/" title="Home" style="text-decoration:none">
+      <a class="nav-brand" href="index.html" title="Home" style="text-decoration:none">
         <span class="logo-mark" aria-hidden="true">P</span>
         <span class="brand-text">Python Study</span>
       </a>
       <div class="nav-links">
-        <a class="nav-btn" href="https://itsyst.github.io/python-strudy/">Student site</a>
+        <a class="nav-btn" href="index.html">Student site</a>
         <span class="nav-btn active">Teacher</span>
       </div>
     </div>
@@ -97,7 +97,7 @@
     }
 
     async function renderLogin(errText) {
-      let href = (location.origin || "") + "/auth/github";
+      let href = "/auth/github";
       try {
         href = await PSCrypto.teacherLoginUrl();
       } catch (_) {}
@@ -114,7 +114,7 @@
     }
 
     async function renderDesk(sess) {
-      const listed = await PSCrypto.listIssuedPublic();
+      const listed = await (PSCrypto.listIssuedTeacher ? PSCrypto.listIssuedTeacher() : PSCrypto.listIssuedPublic());
       const rows = (listed.ok ? listed.codes : []).slice().reverse();
       const last = JSON.parse(sessionStorage.getItem("ps.v1.lastcodes") || "[]");
       $("admin-panel").innerHTML = `
@@ -141,9 +141,12 @@
         <div class="admin-card">
           <h2>Issued on GitHub</h2>
           <p class="muted">${rows.length} live hashes in the repo (plaintext codes are not stored there)</p>
+          <div class="btn-row" style="margin:0.6rem 0 0.8rem">
+            <button class="tool-btn" type="button" id="revoke-all">Revoke all live codes</button>
+          </div>
           <ul class="vault-list">${
             rows.length
-              ? rows.map((c) => `<li><code>${(c.hash || "").slice(0, 12)}</code><span>until ${fmt(c.expires)}</span></li>`).join("")
+              ? rows.map((c) => `<li><code title="${c.hash || ""}">${(c.hash || "").slice(0, 12)}…</code><span>until ${fmt(c.expires)}</span> <button type="button" class="tool-btn revoke-one" data-hash="${c.hash}">Delete</button></li>`).join("")
               : "<li class='muted'>No issued codes yet.</li>"
           }</ul>
         </div>`;
@@ -171,6 +174,25 @@
       };
       $("fresh").querySelectorAll(".code-chip").forEach((btn) => {
         btn.onclick = () => navigator.clipboard.writeText(btn.dataset.code);
+      });
+      const revokeAll = $("revoke-all");
+      if (revokeAll) {
+        revokeAll.onclick = async () => {
+          if (!confirm("Revoke ALL live codes on GitHub? Students will not be able to use them.")) return;
+          const res = await PSCrypto.revokeIssued([], true);
+          if (!res.ok) { alert(res.error || "Revoke failed"); return; }
+          sessionStorage.removeItem("ps.v1.lastcodes");
+          renderDesk(sess);
+        };
+      }
+      document.querySelectorAll(".revoke-one").forEach((btn) => {
+        btn.onclick = async () => {
+          const hash = btn.dataset.hash;
+          if (!hash) return;
+          const res = await PSCrypto.revokeIssued([hash], false);
+          if (!res.ok) { alert(res.error || "Delete failed"); return; }
+          renderDesk(sess);
+        };
       });
     }
 
