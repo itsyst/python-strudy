@@ -212,6 +212,42 @@ def _oauth_redirect_uri() -> str:
     return f"{base}/auth/callback"
 
 
+def _allowed_frontends() -> list[str]:
+    out = []
+    if PUBLIC_BASE_URL:
+        out.append(PUBLIC_BASE_URL)
+    if FRONTEND_ORIGIN:
+        out.append(FRONTEND_ORIGIN)
+    out.append("https://python-strudy-backend.vercel.app")
+    # unique, stripped
+    seen = []
+    for u in out:
+        u = u.rstrip("/")
+        if u and u not in seen:
+            seen.append(u)
+    return seen
+
+
+def _safe_next(url: str | None) -> str:
+    default = f"{PUBLIC_BASE_URL}/desk" if PUBLIC_BASE_URL else f"{FRONTEND_ORIGIN}/python-strudy/admin.html"
+    if not url:
+        return default
+    url = str(url).strip().split("#")[0]
+    for base in _allowed_frontends():
+        if url == base or url.startswith(base + "/") or url.startswith(base + "?"):
+            return url
+    return default
+
+
+def _origin_ok() -> bool:
+    origin = (request.headers.get("Origin") or "").rstrip("/")
+    referer = request.headers.get("Referer") or ""
+    allowed = _allowed_frontends()
+    if origin:
+        return origin in allowed
+    return any(referer.startswith(base) for base in allowed)
+
+
 
 @app.get("/desk")
 @app.get("/admin")
@@ -259,7 +295,7 @@ def github_login():
         return jsonify({"error": "OAuth not configured (GITHUB_OAUTH_CLIENT_ID)"}), 503
     state = secrets.token_urlsafe(32)
     session["oauth_state"] = state
-    next_url = request.args.get("next") or f"{FRONTEND_ORIGIN}/python-strudy/admin.html"
+    next_url = _safe_next(request.args.get("next"))
     session["oauth_next"] = next_url
     params = {
         "client_id": OAUTH_CLIENT_ID,
@@ -302,8 +338,7 @@ def github_callback():
     login = str(user.get("login") or "").lower()
     name = str(user.get("name") or login)
     avatar = str(user.get("avatar_url") or "")
-    next_url = session.pop("oauth_next", None) or f"{FRONTEND_ORIGIN}/python-strudy/admin.html"
-    next_url = next_url.split("#")[0]
+    next_url = _safe_next(session.pop("oauth_next", None))
     if login != TEACHER_LOGIN:
         session.clear()
         sep = "&" if "?" in next_url else "?"
@@ -349,7 +384,7 @@ def api_issued():
 
 @app.post("/api/codes/revoke")
 def api_revoke():
-    if not require_teacher():
+    if not require_teacher() or not _origin_ok():
         return jsonify({"ok": False, "error": f"Forbidden — only @{TEACHER_LOGIN} can revoke codes."}), 403
     body = request.get_json(silent=True) or {}
     hashes = body.get("hashes") or []
@@ -378,7 +413,7 @@ def api_revoke():
 
 @app.post("/api/codes")
 def api_codes():
-    if not require_teacher():
+    if not require_teacher() or not _origin_ok():
         return jsonify(
             {"ok": False, "error": f"Forbidden — only @{TEACHER_LOGIN} can generate codes."}
         ), 403
