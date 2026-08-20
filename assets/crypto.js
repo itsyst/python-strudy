@@ -248,6 +248,13 @@
     const checked = await verifyIssuedCode(raw);
     if (!checked.ok) return checked;
     const hash = await sha256Hex(checked.code);
+    const issued = await loadIssuedPublic();
+    const row = issued.find(function (x) {
+      return x && x.hash === hash && Date.now() <= (x.expires || 0);
+    });
+    if (!row) {
+      return { ok: false, error: "This code was not issued by the GitHub owner." };
+    }
     const device = match.bind.deviceId;
     const ip = match.bind.ip;
     const ipBind = await sha256Hex(hash + "|ip|" + ip);
@@ -367,43 +374,162 @@
     return { ok: true, gate: exported.gate };
   }
 
-  async function generateCodes(pin, count) {
-    const unlocked = await unlockTeacher(pin);
-    if (!unlocked.ok) return unlocked;
+  const GH_KEY = "ps.v1.gh";
+  const OWNER = "itsyst";
+  const REPO = "python-strudy";
+  const ISSUED_PATH = "assets/issued.json";
+
+  function githubHeaders(token) {
+    return {
+      Accept: "application/vnd.github+json",
+      Authorization: "Bearer " + token,
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+  }
+
+  function githubSession() {
+    try {
+      return JSON.parse(sessionStorage.getItem(GH_KEY) || "null");
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function githubSignOut() {
+    sessionStorage.removeItem(GH_KEY);
+    sessionStorage.removeItem("ps.v1.lastcodes");
+  }
+
+  async function githubMe(token) {
+    const r = await fetch("https://api.github.com/user", { headers: githubHeaders(token) });
+    if (r.status === 401) throw new Error("GitHub token is invalid or expired.");
+    if (!r.ok) throw new Error("GitHub user lookup failed.");
+    return r.json();
+  }
+
+  async function githubRepo(token) {
+    const r = await fetch("https://api.github.com/repos/" + OWNER + "/" + REPO, {
+      headers: githubHeaders(token),
+    });
+    if (!r.ok) throw new Error("Cannot read the python-strudy repository.");
+    return r.json();
+  }
+
+  async function githubSignIn(token) {
+    token = String(token || "").trim();
+    if (!token) return { ok: false, error: "Paste a GitHub token." };
+    let user;
+    try {
+      user = await githubMe(token);
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+    if (String(user.login || "").toLowerCase() !== OWNER) {
+      return {
+        ok: false,
+        error: "Signed in as @" + user.login + ". Only the repo owner @" + OWNER + " can open the teacher desk.",
+      };
+    }
+    let repo;
+    try {
+      repo = await githubRepo(token);
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+    const repoOwner = String((repo.owner && repo.owner.login) || "").toLowerCase();
+    if (repoOwner !== OWNER) {
+      return { ok: false, error: "This token does not belong to the repository owner." };
+    }
+    const perm = (repo.permissions && (repo.permissions.admin || repo.permissions.maintain)) || repo.owner.login.toLowerCase() === OWNER;
+    if (!perm) {
+      return { ok: false, error: "Owner permission required on python-strudy." };
+    }
+    const sess = {
+      login: user.login,
+      name: user.name || user.login,
+      avatar: user.avatar_url || "",
+      token: token,
+      at: Date.now(),
+    };
+    sessionStorage.setItem(GH_KEY, JSON.stringify(sess));
+    return { ok: true, session: sess };
+  }
+
+  async function loadIssuedPublic() {
+    try {
+      const res = await fetch("assets/issued.json", { cache: "no-store" });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.issued) ? data.issued : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function b64utf8(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  async function publishIssued(token, issued) {
+    const url = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + ISSUED_PATH;
+    const get = await fetch(url, { headers: githubHeaders(token) });
+    const current = get.ok ? await get.json() : {};
+    const body = JSON.stringify({ issued: issued }, null, 2) + "\n";
+    const put = await fetch(url, {
+      method: "PUT",
+      headers: Object.assign({ "Content-Type": "application/json" }, githubHeaders(token)),
+      body: JSON.stringify({
+        message: "Issue lab passcodes",
+        content: b64utf8(body),
+        sha: current.sha,
+      }),
+    });
+    if (!put.ok) {
+      const t = await put.text();
+      throw new Error("Could not publish codes to GitHub (" + put.status + "). Use a token with Contents: Write. " + t.slice(0, 180));
+    }
+    return put.json();
+  }
+
+  async function generateOwnerCodes(token, count) {
+    const auth = await githubSignIn(token);
+    if (!auth.ok) return auth;
     count = Math.max(1, Math.min(20, Number(count) || 1));
     const now = Date.now();
     const fresh = [];
     for (let i = 0; i < count; i++) fresh.push(await mintCode(now));
-    const vault = unlocked.vault || { codes: [] };
-    vault.codes = (vault.codes || []).concat(fresh);
-    await saveVault(unlocked.key, vault);
-    return { ok: true, codes: fresh, vault: vault };
+    const existing = await loadIssuedPublic();
+    const merged = existing
+      .filter(function (x) { return x && x.hash && now <= (x.expires || 0); })
+      .concat(fresh.map(function (c) {
+        return { hash: c.hash, expires: c.expires, at: now };
+      }));
+    try {
+      await publishIssued(token, merged);
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+    sessionStorage.setItem("ps.v1.lastcodes", JSON.stringify(fresh));
+    return { ok: true, codes: fresh };
   }
 
-  async function listVault(pin) {
-    const unlocked = await unlockTeacher(pin);
-    if (!unlocked.ok) return unlocked;
+  async function listIssuedPublic() {
     const now = Date.now();
-    const usedHashes = {};
-    readUsed().forEach(function (u) {
-      if (u && u.hash) usedHashes[u.hash] = true;
+    const rows = (await loadIssuedPublic()).filter(function (x) {
+      return x && x.hash && now <= (x.expires || 0);
     });
-    const kept = (unlocked.vault.codes || []).filter(function (c) {
-      return c && !usedHashes[c.hash] && now <= c.expires;
-    });
-    if (kept.length !== (unlocked.vault.codes || []).length) {
-      await saveVault(unlocked.key, { codes: kept });
+    return { ok: true, codes: rows };
+  }
+
+  async function generateCodes(pinOrToken, count) {
+    if (/^(ghp_|github_pat_)/.test(String(pinOrToken || ""))) {
+      return generateOwnerCodes(pinOrToken, count);
     }
-    const codes = kept.map(function (c) {
-      return {
-        code: c.code,
-        hash: c.hash,
-        created: c.created,
-        expires: c.expires,
-        expired: false,
-      };
-    });
-    return { ok: true, codes: codes };
+    return { ok: false, error: "Sign in with GitHub as @" + OWNER + " to generate codes." };
+  }
+
+  async function listVault() {
+    return listIssuedPublic();
   }
 
   const BIND_KEY = "ps.v1.bind";
@@ -557,6 +683,11 @@
     exportTeacherGate: exportTeacherGate,
     generateCodes: generateCodes,
     listVault: listVault,
+    githubSignIn: githubSignIn,
+    githubSignOut: githubSignOut,
+    githubSession: githubSession,
+    generateOwnerCodes: generateOwnerCodes,
+    listIssuedPublic: listIssuedPublic,
     probeDevice: probeDevice,
     confirmDevice: confirmDevice,
     deviceConfirmed: deviceConfirmed,

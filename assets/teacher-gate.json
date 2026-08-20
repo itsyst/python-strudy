@@ -1,6 +1,8 @@
 {
-  "v": 1,
+  "v": 2,
+  "owner": "itsyst",
+  "repo": "python-strudy",
   "algo": "sha256-pepper",
   "hash": "41d8395916252356d49f25e0c6e18051d05bf5b51357e17519371468c3e8afc2",
-  "note": "SHA-256 of the teacher PIN. The PIN itself is not stored in this repo. Replace this file to reset."
+  "note": "Teacher desk requires GitHub login as the repo owner. Hash is unused for login."
 }
