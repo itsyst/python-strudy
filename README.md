@@ -11,7 +11,7 @@ python update_files.py
 python -m http.server 8000
 ```
 
-Teacher: http://localhost:8000/admin.html
+Teacher: [admin.html](https://itsyst.github.io/python-strudy/admin.html) — PIN hash lives in `assets/teacher-gate.json` (not created in the browser). To reset: unlock, download a new hash file, replace that file in the repo, and push.
 
 Rebuild the labs vault after adding lab files:
 

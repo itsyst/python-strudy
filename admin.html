@@ -28,8 +28,8 @@
       <p class="hero-badge">Teacher desk</p>
       <h1>Lab passcodes</h1>
       <p class="hero-sub" style="margin-left:0;text-align:left">
-        Codes are created on this computer, stored encrypted, and meant for Discord.
-        A code works for 3 days if unused, then dies. Using it on a student browser burns it there and unlocks Labs for 3 days.
+        The teacher PIN is registered in the GitHub repo as a hash (<code>assets/teacher-gate.json</code>), not in your browser.
+        Anyone visiting this page cannot create their own PIN. After unlock, codes go to Discord.
       </p>
 
       <div id="admin-panel" class="admin-grid"></div>
@@ -38,7 +38,7 @@
 
   <footer class="site-footer">
     <div class="footer-bottom">
-      <p>PIN and codes never leave this browser · AES-GCM + PBKDF2</p>
+      <p>Teacher PIN hash lives in the GitHub repo · not created in the browser</p>
     </div>
   </footer>
 
@@ -52,41 +52,24 @@
       return new Date(ts).toLocaleString();
     }
 
+    function downloadGate(gate) {
+      const blob = new Blob([JSON.stringify(gate, null, 2) + "\n"], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "teacher-gate.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
     function render() {
       const host = $("admin-panel");
-      if (!PSCrypto.hasTeacherPin()) {
-        host.innerHTML = `
-          <form class="admin-card" id="setup-form">
-            <h2>Create a teacher PIN</h2>
-            <p class="muted">At least 6 characters. It never stored in plaintext — only a hash plus an encrypted vault.</p>
-            <label class="field">PIN
-              <input type="password" id="pin1" minlength="6" autocomplete="new-password" required />
-            </label>
-            <label class="field">Repeat PIN
-              <input type="password" id="pin2" minlength="6" autocomplete="new-password" required />
-            </label>
-            <p class="form-error" id="err" hidden></p>
-            <button class="tool-btn run-btn" type="submit">Save PIN</button>
-          </form>`;
-        $("setup-form").onsubmit = async (e) => {
-          e.preventDefault();
-          const a = $("pin1").value, b = $("pin2").value;
-          const err = $("err");
-          if (a !== b) { err.hidden = false; err.textContent = "PINs do not match."; return; }
-          const res = await PSCrypto.setTeacherPin(a);
-          if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
-          pinMemory = a;
-          renderDesk();
-        };
-        return;
-      }
       if (!pinMemory) {
         host.innerHTML = `
           <form class="admin-card" id="login-form">
-            <h2>Unlock vault</h2>
-            <p class="muted">Enter the PIN for this browser. A new computer needs a new PIN (the vault is local).</p>
+            <h2>Unlock teacher desk</h2>
+            <p class="muted">Enter the PIN registered in the GitHub repo. A visitor cannot set a new PIN here.</p>
             <label class="field">PIN
-              <input type="password" id="pin" minlength="6" autocomplete="current-password" required />
+              <input type="password" id="pin" minlength="12" autocomplete="current-password" required />
             </label>
             <p class="form-error" id="err" hidden></p>
             <button class="tool-btn run-btn" type="submit">Unlock</button>
@@ -142,16 +125,20 @@
           }</ul>
         </div>
         <form class="admin-card" id="pin-form">
-          <h2>Change PIN</h2>
+          <h2>Reset published PIN</h2>
+          <p class="muted">This downloads a new <code>teacher-gate.json</code>. Replace <code>assets/teacher-gate.json</code> in the GitHub repo and push. The live site keeps the old PIN until that file is published.</p>
           <label class="field">Current PIN
-            <input type="password" id="oldpin" minlength="6" autocomplete="current-password" required />
+            <input type="password" id="oldpin" minlength="12" autocomplete="current-password" required />
           </label>
           <label class="field">New PIN
-            <input type="password" id="newpin" minlength="6" autocomplete="new-password" required />
+            <input type="password" id="newpin" minlength="12" autocomplete="new-password" required />
+          </label>
+          <label class="field">Repeat new PIN
+            <input type="password" id="newpin2" minlength="12" autocomplete="new-password" required />
           </label>
           <p class="form-error" id="pin-err" hidden></p>
           <div class="btn-row">
-            <button class="tool-btn" type="submit">Update PIN</button>
+            <button class="tool-btn run-btn" type="submit">Download new hash file</button>
             <button class="tool-btn" type="button" id="lock-btn">Lock desk</button>
           </div>
         </form>`;
@@ -176,12 +163,17 @@
       $("pin-form").onsubmit = async (e) => {
         e.preventDefault();
         const err = $("pin-err");
+        err.hidden = true;
+        err.style.color = "var(--danger)";
+        if ($("newpin").value !== $("newpin2").value) {
+          err.hidden = false; err.textContent = "New PINs do not match."; return;
+        }
         const res = await PSCrypto.changeTeacherPin($("oldpin").value, $("newpin").value);
         if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
-        pinMemory = $("newpin").value;
+        downloadGate(res.gate);
         err.hidden = false;
         err.style.color = "var(--success)";
-        err.textContent = "PIN updated. Vault re-encrypted.";
+        err.textContent = "Downloaded teacher-gate.json. Put it in assets/ and git push to reset the live PIN.";
       };
       $("lock-btn").onclick = () => { pinMemory = ""; render(); };
     }

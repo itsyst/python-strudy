@@ -290,40 +290,42 @@
     localStorage.removeItem(SESSION_KEY);
   }
 
-  function teacherMeta() {
-    try {
-      return JSON.parse(localStorage.getItem(META_KEY) || "null");
-    } catch (_) {
-      return null;
-    }
+  const GATE_SALT = enc.encode("python-strudy-teacher-v1");
+  let teacherGateCache = null;
+
+  async function loadTeacherGate() {
+    if (teacherGateCache && teacherGateCache.hash) return teacherGateCache;
+    const res = await fetch("assets/teacher-gate.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("Teacher PIN is not registered in the repo.");
+    teacherGateCache = await res.json();
+    return teacherGateCache;
+  }
+
+  async function hashTeacherPin(pin) {
+    return sha256Hex(pepper() + "|teacher-gate|" + String(pin || ""));
+  }
+
+  async function pinMatchesPublished(pin) {
+    const gate = await loadTeacherGate();
+    const got = await hashTeacherPin(pin);
+    return !!(gate && gate.hash && got === gate.hash);
   }
 
   function hasTeacherPin() {
-    const m = teacherMeta();
-    return !!(m && m.salt && m.verify);
+    return true;
   }
 
-  async function setTeacherPin(pin) {
-    pin = String(pin || "");
-    if (pin.length < 6) return { ok: false, error: "PIN must be at least 6 characters." };
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const key = await deriveAesKey(pin, salt, ["encrypt"]);
-    const verify = await sha256Hex(pepper() + "|pin|" + pin);
-    const empty = await aesEncrypt(key, { codes: [] });
-    localStorage.setItem(
-      META_KEY,
-      JSON.stringify({ v: 1, salt: b64(salt), verify: verify }),
-    );
-    localStorage.setItem(VAULT_KEY, JSON.stringify(empty));
-    return { ok: true };
+  async function setTeacherPin() {
+    return { ok: false, error: "PIN is registered in GitHub, not in this browser." };
   }
 
   async function unlockTeacher(pin) {
-    const meta = teacherMeta();
-    if (!meta) return { ok: false, error: "No teacher PIN on this browser yet." };
-    const verify = await sha256Hex(pepper() + "|pin|" + pin);
-    if (verify !== meta.verify) return { ok: false, error: "Wrong PIN." };
-    const key = await deriveAesKey(pin, unb64(meta.salt), ["encrypt", "decrypt"]);
+    try {
+      if (!(await pinMatchesPublished(pin))) return { ok: false, error: "Wrong PIN." };
+    } catch (e) {
+      return { ok: false, error: e.message || "Teacher gate missing." };
+    }
+    const key = await deriveAesKey(String(pin), GATE_SALT, ["encrypt", "decrypt"]);
     let vault = { codes: [] };
     try {
       vault = await aesDecrypt(key, JSON.parse(localStorage.getItem(VAULT_KEY)));
@@ -338,21 +340,31 @@
     localStorage.setItem(VAULT_KEY, JSON.stringify(blob));
   }
 
+  async function exportTeacherGate(newPin) {
+    newPin = String(newPin || "");
+    if (newPin.length < 12) return { ok: false, error: "New PIN must be at least 12 characters." };
+    const hash = await hashTeacherPin(newPin);
+    return {
+      ok: true,
+      gate: {
+        v: 1,
+        algo: "sha256-pepper",
+        hash: hash,
+        note: "SHA-256 of the teacher PIN. The PIN itself is not stored in this repo. Replace this file to reset.",
+      },
+    };
+  }
+
   async function changeTeacherPin(oldPin, newPin) {
     const unlocked = await unlockTeacher(oldPin);
     if (!unlocked.ok) return unlocked;
-    newPin = String(newPin || "");
-    if (newPin.length < 6) return { ok: false, error: "New PIN must be at least 6 characters." };
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const key = await deriveAesKey(newPin, salt, ["encrypt"]);
-    const verify = await sha256Hex(pepper() + "|pin|" + newPin);
+    const exported = await exportTeacherGate(newPin);
+    if (!exported.ok) return exported;
+    const salt = GATE_SALT;
+    const key = await deriveAesKey(String(newPin), salt, ["encrypt"]);
     const blob = await aesEncrypt(key, unlocked.vault);
-    localStorage.setItem(
-      META_KEY,
-      JSON.stringify({ v: 1, salt: b64(salt), verify: verify }),
-    );
     localStorage.setItem(VAULT_KEY, JSON.stringify(blob));
-    return { ok: true };
+    return { ok: true, gate: exported.gate };
   }
 
   async function generateCodes(pin, count) {
@@ -542,6 +554,7 @@
     setTeacherPin: setTeacherPin,
     unlockTeacher: unlockTeacher,
     changeTeacherPin: changeTeacherPin,
+    exportTeacherGate: exportTeacherGate,
     generateCodes: generateCodes,
     listVault: listVault,
     probeDevice: probeDevice,
