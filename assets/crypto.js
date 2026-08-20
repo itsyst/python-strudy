@@ -302,7 +302,7 @@
 
   async function loadTeacherGate() {
     if (teacherGateCache && teacherGateCache.hash) return teacherGateCache;
-    const res = await fetch("assets/teacher-gate.json", { cache: "no-store" });
+    const res = await fetch(pagesUrl("assets/teacher-gate.json"), { cache: "no-store" });
     if (!res.ok) throw new Error("Teacher PIN is not registered in the repo.");
     teacherGateCache = await res.json();
     return teacherGateCache;
@@ -377,6 +377,17 @@
   const OWNER = "itsyst";
   const REPO = "python-strudy";
   const ISSUED_PATH = "assets/issued.json";
+  const PAGES_ORIGIN = "https://itsyst.github.io/python-strudy/";
+
+  function pagesUrl(path) {
+    path = String(path || "").replace(/^\//, "");
+    var host = (location.hostname || "").toLowerCase();
+    if (host.indexOf("vercel.app") !== -1 || host === "localhost" || host === "127.0.0.1") {
+      return PAGES_ORIGIN + path;
+    }
+    return path;
+  }
+
 
   /* ---------- Teacher backend (no browser tokens) ---------- */
   const TEACHER_JWT_KEY = "ps.v1.teacherJwt";
@@ -472,7 +483,7 @@
 
   async function loadIssuedPublic() {
     try {
-      const res = await fetch("assets/issued.json", { cache: "no-store" });
+      const res = await fetch(pagesUrl("assets/issued.json"), { cache: "no-store" });
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data.issued) ? data.issued : [];
@@ -505,6 +516,43 @@
       return { ok: true, codes: codes };
     } catch (e) {
       return { ok: false, error: "Cannot reach teacher backend: " + (e.message || "network error") };
+    }
+  }
+
+
+  async function listIssuedTeacher() {
+    const base = await getApiBase();
+    if (!base) return listIssuedPublic();
+    try {
+      const res = await fetch(base + "/api/issued", {
+        credentials: "include",
+        cache: "no-store",
+        headers: teacherHeaders(),
+      });
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) return { ok: false, error: data.error || "Could not load issued codes.", codes: [] };
+      const rows = Array.isArray(data.codes) ? data.codes : [];
+      return { ok: true, codes: rows };
+    } catch (e) {
+      return { ok: false, error: e.message || "network error", codes: [] };
+    }
+  }
+
+  async function revokeIssued(hashes, all) {
+    const base = await getApiBase();
+    if (!base) return { ok: false, error: "Teacher backend not configured." };
+    try {
+      const res = await fetch(base + "/api/codes/revoke", {
+        method: "POST",
+        credentials: "include",
+        headers: teacherHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ hashes: hashes || [], all: !!all }),
+      });
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) return { ok: false, error: data.error || "Revoke failed." };
+      return { ok: true, codes: Array.isArray(data.codes) ? data.codes : [] };
+    } catch (e) {
+      return { ok: false, error: e.message || "network error" };
     }
   }
 
@@ -636,7 +684,7 @@
   let labsVaultCache = null;
   async function loadLabsVault() {
     if (labsVaultCache) return labsVaultCache;
-    const res = await fetch("assets/labs-vault.json", { cache: "no-store" });
+    const res = await fetch(pagesUrl("assets/labs-vault.json"), { cache: "no-store" });
     if (!res.ok) throw new Error("Labs vault missing");
     labsVaultCache = await res.json();
     return labsVaultCache;
@@ -657,7 +705,7 @@
 
   async function fetchUsedLedger() {
     try {
-      const res = await fetch("assets/used-ledger.json", { cache: "no-store" });
+      const res = await fetch(pagesUrl("assets/used-ledger.json"), { cache: "no-store" });
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data.used) ? data.used : [];
@@ -683,6 +731,8 @@
     githubSession: githubSession,
     generateOwnerCodes: generateOwnerCodes,
     listIssuedPublic: listIssuedPublic,
+    listIssuedTeacher: listIssuedTeacher,
+    revokeIssued: revokeIssued,
     getApiBase: getApiBase,
     teacherLoginUrl: teacherLoginUrl,
     teacherSession: teacherSession,
