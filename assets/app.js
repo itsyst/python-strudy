@@ -20,6 +20,12 @@ const ICON_SVG = {
     '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
   lock:
     '<svg class="lock-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  discord:
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M19.3 5.2A18 18 0 0 0 14.9 4l-.2.4c1.6.4 3 1.1 4.2 2.1-1.8-.9-3.6-1.5-5.5-1.8h-.8c-1.9.3-3.7.9-5.5 1.8 1.2-1 2.6-1.7 4.2-2.1L10.1 4A18 18 0 0 0 5.7 5.2C3.2 8.9 2.5 12.5 2.8 16c1.8 1.3 3.6 2.2 5.4 2.7l.7-1.1c-.8-.3-1.5-.7-2.2-1.1.2.1 3.1 1.5 7.3 1.5s7.1-1.4 7.3-1.5c-.7.4-1.4.8-2.2 1.1l.7 1.1c1.8-.5 3.6-1.4 5.4-2.7.4-4.1-.6-7.7-3.1-10.8ZM9.2 14.4c-.8 0-1.5-.8-1.5-1.7s.6-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Zm5.6 0c-.8 0-1.5-.8-1.5-1.7s.6-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Z"/></svg>',
+  kofi:
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 8h1.2A3.3 3.3 0 0 1 21.5 11 3.3 3.3 0 0 1 18.2 14H17"/><path d="M4 8h13v6.2A4.8 4.8 0 0 1 12.2 19H8.8A4.8 4.8 0 0 1 4 14.2V8Z"/><path d="M8 3v3M12 3v3"/></svg>',
+  patreon:
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="14.5" cy="9" r="5.5"/><rect x="4" y="3.5" width="3.6" height="17" rx="1.6"/></svg>',
 };
 
 function iconSvg(key) {
@@ -338,7 +344,8 @@ function renderLabsLock() {
     '<div class="lock-mark">' + ICON_SVG.lock + "</div>" +
     "<h3>Labs are locked</h3>" +
     "<p>Join Discord for a one-time passcode. Each code works once on this device and IP, then it is erased. Unused codes expire after 3 days.</p>" +
-    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Join Discord to get a passcode</a>' +
+    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">' +
+    ICON_SVG.discord + " Join Discord to get a passcode</a>" +
     '<form id="lab-unlock-form" class="unlock-form" autocomplete="off">' +
     '<label class="field">One-time passcode' +
     '<input id="lab-code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" aria-label="Lab passcode" required />' +
@@ -346,10 +353,13 @@ function renderLabsLock() {
     '<p class="form-error" id="lab-err" hidden></p>' +
     '<button class="tool-btn run-btn" type="submit">Unlock Labs</button>' +
     "</form>" +
-    '<div class="support-box"><p>Labs take time to prepare. If they help you, a coffee keeps them coming.</p>' +
+    '<div class="support-box">' +
+    "<p>Labs take time to prepare. If they help you, a coffee keeps them coming.</p>" +
     '<div class="btn-row">' +
-    '<a class="tool-btn" href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Ko-fi</a>' +
-    '<a class="tool-btn" href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Patreon</a>' +
+    '<a class="support-btn kofi" href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">' +
+    ICON_SVG.kofi + " Ko-fi</a>" +
+    '<a class="support-btn patreon" href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">' +
+    ICON_SVG.patreon + " Patreon</a>" +
     "</div></div></div>";
   const form = $("lab-unlock-form");
   if (form) {
