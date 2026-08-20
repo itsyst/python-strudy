@@ -15,7 +15,7 @@ python update_files.py
 python -m http.server 8000
 ```
 
-Teacher: [admin.html](https://itsyst.github.io/python-strudy/admin.html) — only GitHub user **@itsyst** (repo owner). Sign in with a GitHub token; generated codes are published as hashes in `assets/issued.json`. Other GitHub accounts are rejected.
+Teacher: [admin.html](https://itsyst.github.io/python-strudy/admin.html) — **no personal access tokens in the browser**. Deploy [`teacher-server/`](teacher-server/) (GitHub OAuth + GitHub App), then set `apiBase` in `assets/teacher-api.json`.
 
 Rebuild the labs vault after adding lab files:
 
