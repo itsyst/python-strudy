@@ -1,27 +1,3 @@
-"""
-python-strudy teacher backend
-=============================
-- GitHub OAuth identifies the teacher (must be login == itsyst).
-- GitHub App installation token publishes assets/issued.json.
-- The browser never sees a personal access token or the App private key.
-
-Required environment variables (server only):
-
-  FLASK_SECRET_KEY          random secret for session cookies
-  GITHUB_OAUTH_CLIENT_ID    OAuth App client id
-  GITHUB_OAUTH_CLIENT_SECRET
-  GITHUB_APP_ID             GitHub App id (numeric)
-  GITHUB_PRIVATE_KEY        PEM private key of the GitHub App (newlines as \\n)
-  GITHUB_INSTALLATION_ID    installation id on itsyst/python-strudy
-  GITHUB_OWNER              itsyst
-  GITHUB_REPO               python-strudy
-  FRONTEND_ORIGIN           https://itsyst.github.io   (CORS)
-  PUBLIC_BASE_URL           https://your-backend.onrender.com  (OAuth redirect_uri)
-
-Optional:
-  TEACHER_LOGIN             default itsyst
-"""
-
 from __future__ import annotations
 
 import base64
@@ -61,9 +37,6 @@ ALPH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 PEPPER = "TDDE24|python-strudy|lab-gate|2026"
 
 
-# ---------------------------------------------------------------------------
-# CORS (credentials required for session cookie across github.io <-> backend)
-# ---------------------------------------------------------------------------
 @app.after_request
 def add_cors(resp):
     origin = request.headers.get("Origin", "")
@@ -83,9 +56,6 @@ def options_ok(_any=None):
     return "", 204
 
 
-# ---------------------------------------------------------------------------
-# Code minting (must match assets/crypto.js exactly)
-# ---------------------------------------------------------------------------
 def _sha256_hex(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -121,9 +91,6 @@ def mint_code(now_ms: int | None = None) -> dict[str, Any]:
     }
 
 
-# ---------------------------------------------------------------------------
-# GitHub App installation token (server-side only)
-# ---------------------------------------------------------------------------
 def _app_jwt() -> str:
     if not APP_ID or not PRIVATE_KEY_PEM:
         raise RuntimeError("GITHUB_APP_ID / GITHUB_PRIVATE_KEY not configured")
@@ -188,9 +155,6 @@ def _put_issued(token: str, issued: list[dict], sha: str | None) -> None:
         raise RuntimeError(f"Publish issued.json failed ({r.status_code}): {r.text[:240]}")
 
 
-# ---------------------------------------------------------------------------
-# Auth helpers
-# ---------------------------------------------------------------------------
 def require_teacher() -> bool:
     return str(session.get("github_login") or "").lower() == TEACHER_LOGIN
 
@@ -200,9 +164,6 @@ def _oauth_redirect_uri() -> str:
     return f"{base}/auth/callback"
 
 
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
 @app.get("/")
 def index():
     return jsonify(
@@ -219,14 +180,27 @@ def index():
 
 @app.get("/health")
 def health():
-    ok = bool(APP_ID and PRIVATE_KEY_PEM and INSTALLATION_ID and OAUTH_CLIENT_ID)
-    return jsonify({"ok": ok, "configured": ok}), (200 if ok else 503)
+    missing = []
+    if not OAUTH_CLIENT_ID:
+        missing.append("GITHUB_OAUTH_CLIENT_ID")
+    if not OAUTH_CLIENT_SECRET:
+        missing.append("GITHUB_OAUTH_CLIENT_SECRET")
+    if not APP_ID:
+        missing.append("GITHUB_APP_ID")
+    if not PRIVATE_KEY_PEM:
+        missing.append("GITHUB_PRIVATE_KEY")
+    if not INSTALLATION_ID:
+        missing.append("GITHUB_INSTALLATION_ID")
+    if not PUBLIC_BASE_URL:
+        missing.append("PUBLIC_BASE_URL")
+    ok = len(missing) == 0
+    return jsonify({"ok": ok, "configured": ok, "missing": missing}), (200 if ok else 503)
 
 
 @app.get("/auth/github")
 def github_login():
     if not OAUTH_CLIENT_ID:
-        return "OAuth not configured (GITHUB_OAUTH_CLIENT_ID)", 503
+        return jsonify({"error": "OAuth not configured (GITHUB_OAUTH_CLIENT_ID)"}), 503
     state = secrets.token_urlsafe(32)
     session["oauth_state"] = state
     next_url = request.args.get("next") or f"{FRONTEND_ORIGIN}/python-strudy/admin.html"
@@ -248,7 +222,6 @@ def github_callback():
     code = request.args.get("code")
     if not code:
         return "Missing code", 400
-
     token_r = requests.post(
         "https://github.com/login/oauth/access_token",
         headers={"Accept": "application/json"},
@@ -266,12 +239,7 @@ def github_callback():
     access_token = token_data.get("access_token")
     if not access_token:
         return f"No access_token: {token_data}", 502
-
-    user_r = requests.get(
-        "https://api.github.com/user",
-        headers=_gh_headers(access_token),
-        timeout=20,
-    )
+    user_r = requests.get("https://api.github.com/user", headers=_gh_headers(access_token), timeout=20)
     if user_r.status_code >= 400:
         return "Could not read GitHub user", 502
     login = str(user_r.json().get("login") or "").lower()
@@ -280,7 +248,6 @@ def github_callback():
         session.clear()
         sep = "&" if "?" in next_url else "?"
         return redirect(f"{next_url}{sep}err=forbidden&login={login}")
-
     session["github_login"] = login
     session["github_name"] = user_r.json().get("name") or login
     session["github_avatar"] = user_r.json().get("avatar_url") or ""
@@ -313,17 +280,14 @@ def api_codes():
         return jsonify(
             {"ok": False, "error": f"Forbidden — only @{TEACHER_LOGIN} can generate codes."}
         ), 403
-
     body = request.get_json(silent=True) or {}
     try:
         count = int(body.get("count", 5))
     except (TypeError, ValueError):
         count = 5
     count = max(1, min(20, count))
-
     now = int(time.time() * 1000)
     fresh = [mint_code(now) for _ in range(count)]
-
     try:
         token = _installation_token()
         existing, sha = _get_issued(token)
@@ -337,12 +301,8 @@ def api_codes():
         _put_issued(token, merged, sha)
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 502
-
     return jsonify(
-        {
-            "ok": True,
-            "codes": [{"code": c["code"], "expires": c["expires"]} for c in fresh],
-        }
+        {"ok": True, "codes": [{"code": c["code"], "expires": c["expires"]} for c in fresh]}
     )
 
 
