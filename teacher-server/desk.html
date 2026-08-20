@@ -54,6 +54,9 @@
   <script src="https://itsyst.github.io/python-strudy/assets/crypto.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({
+      "&": "&", "<": "<", ">": ">", '"': """, "'": "&#39;"
+    }[c]));
 
     function fmt(ts) {
       if (!ts) return "—";
@@ -108,7 +111,7 @@
             You will be redirected to GitHub. Only account <strong>@itsyst</strong> is accepted.
             No token is ever pasted or stored in this browser.
           </p>
-          <p class="form-error" id="err" ${errText ? "" : "hidden"}>${errText || ""}</p>
+          <p class="form-error" id="err" ${errText ? "" : "hidden"}>${esc(errText)}</p>
           <a class="tool-btn run-btn" id="github-login" href="${href}">Sign in with GitHub</a>
         </div>`;
     }
@@ -119,7 +122,7 @@
       const last = JSON.parse(sessionStorage.getItem("ps.v1.lastcodes") || "[]");
       $("admin-panel").innerHTML = `
         <div class="admin-card">
-          <h2>Signed in as @${sess.login}</h2>
+          <h2>Signed in as @${esc(sess.login)}</h2>
           <p class="muted">Repo owner of itsyst/python-strudy. Codes are published as hashes only — the browser never holds a GitHub token.</p>
           <button class="tool-btn" type="button" id="lock-btn">Sign out</button>
         </div>
@@ -135,7 +138,7 @@
             <button class="tool-btn" type="button" id="copy-live">Copy last codes</button>
           </div>
           <div id="fresh" class="code-list">${
-            last.map((c) => `<button type="button" class="code-chip" data-code="${c.code}"><code>${c.code}</code><span>copy</span></button>`).join("")
+            last.map((c) => `<button type="button" class="code-chip" data-code="${esc(c.code)}"><code>${esc(c.code)}</code><span>copy</span></button>`).join("")
           }</div>
         </form>
         <div class="admin-card">
@@ -146,7 +149,7 @@
           </div>
           <ul class="vault-list">${
             rows.length
-              ? rows.map((c) => `<li><code title="${c.hash || ""}">${(c.hash || "").slice(0, 12)}…</code><span>until ${fmt(c.expires)}</span> <button type="button" class="tool-btn revoke-one" data-hash="${c.hash}">Delete</button></li>`).join("")
+              ? rows.map((c) => `<li><code title="${esc(c.hash)}">${esc((c.hash || "").slice(0, 12))}…</code><span>until ${fmt(c.expires)}</span> <button type="button" class="tool-btn revoke-one" data-hash="${esc(c.hash)}">Delete</button></li>`).join("")
               : "<li class='muted'>No issued codes yet.</li>"
           }</ul>
         </div>`;
