@@ -213,6 +213,8 @@
 
   async function hasLabSession() {
     try {
+      const match = await bindingMatches();
+      if (!match.ok) return false;
       const blob = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       const sess = await unwrapWithPepper(blob);
       if (!sess || !sess.until) return false;
@@ -220,9 +222,9 @@
         localStorage.removeItem(SESSION_KEY);
         return false;
       }
-      const cookie = getCookie(COOKIE_USED);
-      if (sess.hash && cookie && cookie.indexOf(sess.hash.slice(0, 12)) === -1) {
-        /* cookie missing — still allow if local session is valid */
+      if (sess.device && match.bind.deviceId && sess.device !== match.bind.deviceId) return false;
+      if (sess.ip && match.bind.ip && sess.ip !== "unknown" && match.bind.ip !== "unknown" && sess.ip !== match.bind.ip) {
+        return false;
       }
       return true;
     } catch (_) {
@@ -241,38 +243,47 @@
   }
 
   async function redeemCode(raw) {
+    const match = await bindingMatches();
+    if (!match.ok) return { ok: false, error: "Confirm this device and IP first." };
     const checked = await verifyIssuedCode(raw);
     if (!checked.ok) return checked;
     const hash = await sha256Hex(checked.code);
-    const device = getDeviceId();
-    const ip = await getIp();
+    const device = match.bind.deviceId;
+    const ip = match.bind.ip;
     const ipBind = await sha256Hex(hash + "|ip|" + ip);
     const deviceBind = await sha256Hex(hash + "|dev|" + device);
     const used = readUsed();
     const cookie = getCookie(COOKIE_USED);
+    const ledger = await fetchUsedLedger();
     const already =
       used.some(function (u) {
         return u.hash === hash || u.ipBind === ipBind || u.deviceBind === deviceBind;
       }) ||
+      ledger.indexOf(hash) !== -1 ||
       (cookie && cookie.split(".").indexOf(hash.slice(0, 12)) !== -1);
     if (already) {
-      return { ok: false, error: "This code was already used on this device or IP." };
+      return { ok: false, error: "This code was already used on this device, IP, or ledger." };
     }
-    used.push({ hash: hash, ipBind: ipBind, deviceBind: deviceBind, ip: ip, at: Date.now() });
+    used.push({
+      hash: hash, ipBind: ipBind, deviceBind: deviceBind, ip: ip, device: device,
+      kind: match.bind.kind, browser: match.bind.browser, at: Date.now(),
+    });
     writeUsed(used);
+    writeLog({
+      at: Date.now(), ip: ip, deviceId: device, kind: match.bind.kind,
+      browser: match.bind.browser, hash: hash.slice(0, 12),
+    });
     const stamp = hash.slice(0, 12);
     const prev = cookie ? cookie.split(".").filter(Boolean) : [];
     if (prev.indexOf(stamp) === -1) prev.push(stamp);
     setCookie(COOKIE_USED, prev.join("."), TTL_MS);
     const until = Date.now() + TTL_MS;
     const blob = await wrapWithPepper({
-      until: until,
-      hash: hash,
-      ip: ip,
-      device: device,
+      until: until, hash: hash, ip: ip, device: device,
+      kind: match.bind.kind, browser: match.bind.browser,
     });
     localStorage.setItem(SESSION_KEY, JSON.stringify(blob));
-    return { ok: true, until: until };
+    return { ok: true, until: until, bind: match.bind };
   }
 
   function lockLabs() {
@@ -383,6 +394,143 @@
     return { ok: true, codes: codes };
   }
 
+  const BIND_KEY = "ps.v1.bind";
+  const LOG_KEY = "ps.v1.log";
+  const VAULT_SALT = enc.encode("python-strudy-labs-vault-v1");
+
+  function parseBrowser(ua) {
+    ua = ua || "";
+    if (/Edg\//.test(ua)) return "Edge";
+    if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) return "Chrome";
+    if (/Firefox\//.test(ua)) return "Firefox";
+    if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return "Safari";
+    return "Browser";
+  }
+
+  async function canvasStamp() {
+    try {
+      const c = document.createElement("canvas");
+      c.width = 200;
+      c.height = 50;
+      const x = c.getContext("2d");
+      x.textBaseline = "top";
+      x.font = "14px Arial";
+      x.fillStyle = "#3dd6c6";
+      x.fillRect(0, 0, 200, 50);
+      x.fillStyle = "#000";
+      x.fillText("python-strudy", 4, 8);
+      return (await sha256Hex(c.toDataURL())).slice(0, 16);
+    } catch (_) {
+      return "nocanvas";
+    }
+  }
+
+  async function probeDevice() {
+    const ip = await getIp();
+    const ua = navigator.userAgent || "";
+    const touch = navigator.maxTouchPoints || 0;
+    const mobile = /Mobi|Android|iPhone|iPad/i.test(ua) || touch > 2;
+    const screenInfo =
+      (window.screen && window.screen.width) + "x" +
+      (window.screen && window.screen.height) + "@" +
+      (window.devicePixelRatio || 1);
+    const fpSrc = [
+      ua, navigator.platform || "", navigator.language || "",
+      Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+      screenInfo, navigator.hardwareConcurrency || "", touch,
+      navigator.deviceMemory || "", await canvasStamp(),
+    ].join("|");
+    return {
+      ip: ip,
+      mac: "blocked-by-browser",
+      deviceId: (await sha256Hex("fp|" + fpSrc)).slice(0, 20),
+      kind: mobile ? "mobile" : "pc",
+      browser: parseBrowser(ua),
+      screen: screenInfo,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+      ua: ua.slice(0, 180),
+      at: Date.now(),
+    };
+  }
+
+  function readBind() {
+    try { return JSON.parse(localStorage.getItem(BIND_KEY) || "null"); }
+    catch (_) { return null; }
+  }
+
+  async function confirmDevice() {
+    const probe = await probeDevice();
+    localStorage.setItem(BIND_KEY, JSON.stringify(probe));
+    setCookie("ps_bind", probe.deviceId, TTL_MS * 4);
+    return probe;
+  }
+
+  function deviceConfirmed() {
+    const b = readBind();
+    return !!(b && b.deviceId && b.ip);
+  }
+
+  async function bindingMatches() {
+    const b = readBind();
+    if (!b) return { ok: false, reason: "not-confirmed" };
+    const now = await probeDevice();
+    if (now.deviceId !== b.deviceId) return { ok: false, reason: "device", now: now, bind: b };
+    if (now.kind !== b.kind) return { ok: false, reason: "kind", now: now, bind: b };
+    if (now.browser !== b.browser) return { ok: false, reason: "browser", now: now, bind: b };
+    if (now.ip !== "unknown" && b.ip !== "unknown" && now.ip !== b.ip) {
+      return { ok: false, reason: "ip", now: now, bind: b };
+    }
+    return { ok: true, now: now, bind: b };
+  }
+
+  function readLog() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+      return Array.isArray(arr) ? arr : [];
+    } catch (_) { return []; }
+  }
+
+  function writeLog(entry) {
+    const arr = readLog();
+    arr.push(entry);
+    localStorage.setItem(LOG_KEY, JSON.stringify(arr.slice(-100)));
+  }
+
+  async function labsVaultKey() {
+    return deriveAesKey(pepper() + "|labs-vault", VAULT_SALT, ["decrypt"]);
+  }
+
+  let labsVaultCache = null;
+  async function loadLabsVault() {
+    if (labsVaultCache) return labsVaultCache;
+    const res = await fetch("assets/labs-vault.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("Labs vault missing");
+    labsVaultCache = await res.json();
+    return labsVaultCache;
+  }
+
+  async function decryptLabFile(path) {
+    const pack = await loadLabsVault();
+    const item = pack.files && pack.files[path];
+    if (!item) return null;
+    const key = await labsVaultKey();
+    const raw = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: unb64(item.iv) },
+      key,
+      unb64(item.data),
+    );
+    return dec.decode(raw);
+  }
+
+  async function fetchUsedLedger() {
+    try {
+      const res = await fetch("assets/used-ledger.json", { cache: "no-store" });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.used) ? data.used : [];
+    } catch (_) { return []; }
+  }
+
   global.PSCrypto = {
     TTL_MS: TTL_MS,
     normalizeCode: normalizeCode,
@@ -396,5 +544,13 @@
     changeTeacherPin: changeTeacherPin,
     generateCodes: generateCodes,
     listVault: listVault,
+    probeDevice: probeDevice,
+    confirmDevice: confirmDevice,
+    deviceConfirmed: deviceConfirmed,
+    bindingMatches: bindingMatches,
+    readBind: readBind,
+    readLog: readLog,
+    decryptLabFile: decryptLabFile,
+    loadLabsVault: loadLabsVault,
   };
 })(window);
