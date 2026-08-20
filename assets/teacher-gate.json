@@ -1,8 +1,8 @@
 {
-  "v": 2,
+  "v": 3,
   "owner": "itsyst",
   "repo": "python-strudy",
-  "algo": "sha256-pepper",
-  "hash": "41d8395916252356d49f25e0c6e18051d05bf5b51357e17519371468c3e8afc2",
-  "note": "Teacher desk requires GitHub login as the repo owner. Hash is unused for login."
+  "algo": "github-oauth-app",
+  "hash": "",
+  "note": "Teacher desk requires GitHub OAuth as the repo owner via teacher-server. No PIN and no personal access tokens in the browser."
 }
