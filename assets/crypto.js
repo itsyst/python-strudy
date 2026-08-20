@@ -153,10 +153,55 @@
     return { ok: false, error: "Invalid or expired code." };
   }
 
+  const DEVICE_KEY = "ps.v1.device";
+  const COOKIE_USED = "ps_used";
+
+  function getDeviceId() {
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id = b64(crypto.getRandomValues(new Uint8Array(16)));
+      localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  }
+
+  async function getIp() {
+    try {
+      const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+      if (!r.ok) throw new Error("ip");
+      const j = await r.json();
+      return String(j.ip || "unknown");
+    } catch (_) {
+      return "unknown";
+    }
+  }
+
+  function setCookie(name, value, ms) {
+    const exp = new Date(Date.now() + ms).toUTCString();
+    document.cookie =
+      name + "=" + encodeURIComponent(value) + "; expires=" + exp + "; path=/; SameSite=Lax";
+  }
+
+  function getCookie(name) {
+    const parts = document.cookie.split(";");
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i].trim();
+      if (p.indexOf(name + "=") === 0) return decodeURIComponent(p.slice(name.length + 1));
+    }
+    return "";
+  }
+
   function readUsed() {
     try {
       const arr = JSON.parse(localStorage.getItem(USED_KEY) || "[]");
-      return Array.isArray(arr) ? arr : [];
+      if (!Array.isArray(arr)) return [];
+      const now = Date.now();
+      return arr
+        .map(function (x) {
+          if (typeof x === "string") return { hash: x, at: now };
+          return x;
+        })
+        .filter(function (x) { return x && x.hash && now - (x.at || 0) < TTL_MS * 4; });
     } catch (_) {
       return [];
     }
@@ -174,6 +219,10 @@
       if (Date.now() > sess.until) {
         localStorage.removeItem(SESSION_KEY);
         return false;
+      }
+      const cookie = getCookie(COOKIE_USED);
+      if (sess.hash && cookie && cookie.indexOf(sess.hash.slice(0, 12)) === -1) {
+        /* cookie missing — still allow if local session is valid */
       }
       return true;
     } catch (_) {
@@ -195,14 +244,33 @@
     const checked = await verifyIssuedCode(raw);
     if (!checked.ok) return checked;
     const hash = await sha256Hex(checked.code);
+    const device = getDeviceId();
+    const ip = await getIp();
+    const ipBind = await sha256Hex(hash + "|ip|" + ip);
+    const deviceBind = await sha256Hex(hash + "|dev|" + device);
     const used = readUsed();
-    if (used.indexOf(hash) !== -1) {
-      return { ok: false, error: "This code was already used on this device." };
+    const cookie = getCookie(COOKIE_USED);
+    const already =
+      used.some(function (u) {
+        return u.hash === hash || u.ipBind === ipBind || u.deviceBind === deviceBind;
+      }) ||
+      (cookie && cookie.split(".").indexOf(hash.slice(0, 12)) !== -1);
+    if (already) {
+      return { ok: false, error: "This code was already used on this device or IP." };
     }
-    used.push(hash);
+    used.push({ hash: hash, ipBind: ipBind, deviceBind: deviceBind, ip: ip, at: Date.now() });
     writeUsed(used);
+    const stamp = hash.slice(0, 12);
+    const prev = cookie ? cookie.split(".").filter(Boolean) : [];
+    if (prev.indexOf(stamp) === -1) prev.push(stamp);
+    setCookie(COOKIE_USED, prev.join("."), TTL_MS);
     const until = Date.now() + TTL_MS;
-    const blob = await wrapWithPepper({ until: until, hash: hash });
+    const blob = await wrapWithPepper({
+      until: until,
+      hash: hash,
+      ip: ip,
+      device: device,
+    });
     localStorage.setItem(SESSION_KEY, JSON.stringify(blob));
     return { ok: true, until: until };
   }
@@ -293,13 +361,23 @@
     const unlocked = await unlockTeacher(pin);
     if (!unlocked.ok) return unlocked;
     const now = Date.now();
-    const codes = (unlocked.vault.codes || []).map(function (c) {
+    const usedHashes = {};
+    readUsed().forEach(function (u) {
+      if (u && u.hash) usedHashes[u.hash] = true;
+    });
+    const kept = (unlocked.vault.codes || []).filter(function (c) {
+      return c && !usedHashes[c.hash] && now <= c.expires;
+    });
+    if (kept.length !== (unlocked.vault.codes || []).length) {
+      await saveVault(unlocked.key, { codes: kept });
+    }
+    const codes = kept.map(function (c) {
       return {
         code: c.code,
         hash: c.hash,
         created: c.created,
         expires: c.expires,
-        expired: now > c.expires,
+        expired: false,
       };
     });
     return { ok: true, codes: codes };
