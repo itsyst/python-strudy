@@ -10,20 +10,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <nav class="navbar" role="navigation" aria-label="Main">
-    <div class="nav-brand" onclick="showHome()" title="Home">
-      <span class="logo-mark" aria-hidden="true">P</span>
-      <span class="brand-text">Python Study</span>
+  <header class="navbar" role="navigation" aria-label="Main">
+    <div class="nav-inner">
+      <div class="nav-brand" onclick="showHome()" title="Home">
+        <span class="logo-mark" aria-hidden="true">P</span>
+        <span class="brand-text">Python Study</span>
+      </div>
+      <div class="nav-links" id="nav-links">
+        <button class="nav-btn active" data-view="home" onclick="showHome()">Home</button>
+      </div>
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search files" autocomplete="off" aria-label="Search files" />
+      </div>
+      <a class="teacher-link" href="admin.html">Teacher</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-    <div class="nav-links" id="nav-links">
-      <button class="nav-btn active" data-view="home" onclick="showHome()">Home</button>
-    </div>
-    <div class="search-wrap">
-      <span class="search-icon" aria-hidden="true">⌕</span>
-      <input type="search" id="search" placeholder="Search files…" autocomplete="off" aria-label="Search files" />
-    </div>
-    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
-  </nav>
+  </header>
 
   <main id="app">
     <section id="view-home" class="view active">
@@ -31,18 +35,19 @@
         <p class="hero-badge">TDDE24 · Python</p>
         <h1>Course materials, ready in the browser</h1>
         <p class="hero-sub">Open an exam or exercise, edit the Python, and run it in a terminal — no install. Labs stay locked until you redeem a one-time Discord passcode.</p>
-        <div class="hero-cards" id="home-cards"></div>
+        <p class="hero-chip">Editor + terminal on every <code>.py</code> file</p>
       </div>
+      <div class="hero-cards" id="home-cards"></div>
     </section>
 
     <div id="dynamic-sections"></div>
 
     <section id="view-viewer" class="view">
       <div class="viewer-toolbar">
-        <button class="tool-btn back-btn" onclick="goBack()" type="button">← Back</button>
+        <button class="tool-btn back-btn" onclick="goBack()" type="button">Back</button>
         <h2 id="viewer-title" class="viewer-title">File</h2>
         <div class="viewer-actions">
-          <button class="tool-btn run-btn" id="run-btn" onclick="runPlayground()" type="button" hidden>▶ Run</button>
+          <button class="tool-btn run-btn" id="run-btn" onclick="runPlayground()" type="button" hidden>Run</button>
           <button class="tool-btn" id="reset-btn" onclick="resetPlayground()" type="button" hidden>Reset</button>
           <a id="raw-link" class="tool-btn raw-btn" href="#" target="_blank" rel="noopener">Raw</a>
           <button class="tool-btn copy-btn" onclick="copyCode()" type="button">Copy</button>
@@ -66,7 +71,7 @@
             <div id="term-out" class="term-out" aria-live="polite"></div>
             <form id="repl-form" class="term-input-row" autocomplete="off">
               <span class="term-prompt">❯</span>
-              <input id="term-in" type="text" autocomplete="off" placeholder="ls  ·  python labb_8a.py  ·  or Python after Run" aria-label="Python terminal input" />
+              <input id="term-in" type="text" autocomplete="off" placeholder="ls  ·  clear  ·  python labb_8a.py" aria-label="Python terminal input" />
             </form>
           </section>
         </div>
@@ -82,35 +87,16 @@
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <div class="footer-brand">
-        <span class="logo-mark" aria-hidden="true">P</span>
-        <div>
-          <strong>Python Study</strong>
-          <p>Materials for students · TDDE24</p>
-        </div>
+      <div>
+        <p class="footer-title">Python Study</p>
+        <p class="muted">TDDE24 materials for students</p>
       </div>
-
-      <div class="footer-col">
-        <h4>Navigate</h4>
-        <a href="#" onclick="showHome(); return false;">Home</a>
-        <a href="https://github.com/itsyst/python-strudy" target="_blank" rel="noopener">Repository</a>
-        <a href="admin.html">Teacher desk</a>
+      <div class="footer-links">
+        <a href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Discord</a>
+        <a href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Ko-fi</a>
+        <a href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Patreon</a>
+        <span class="muted">© 2026 <a href="https://github.com/itsyst" target="_blank" rel="noopener">itsyst</a></span>
       </div>
-
-      <div class="footer-col">
-        <h4>Community</h4>
-        <a href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Discord — get lab codes</a>
-        <a href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Support on Ko-fi</a>
-        <a href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Support on Patreon</a>
-      </div>
-
-      <div class="footer-copy">
-        <p>© 2026 <a href="https://github.com/itsyst" target="_blank" rel="noopener">itsyst</a></p>
-        <p class="muted">All rights reserved · Free for students</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>Made for TDDE24 students · Hosted on GitHub Pages · Python runs in your browser</p>
     </div>
   </footer>
 
