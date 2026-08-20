@@ -211,8 +211,27 @@
     localStorage.setItem(USED_KEY, JSON.stringify(arr.slice(-200)));
   }
 
+  function readStudentJwt() {
+    try {
+      const tok = sessionStorage.getItem(STUDENT_JWT_KEY) || "";
+      if (!tok) return null;
+      const parts = tok.split(".");
+      if (parts.length < 2) return null;
+      const json = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+      if (!json || json.role !== "student") return null;
+      if (json.exp && json.exp * 1000 < Date.now()) {
+        sessionStorage.removeItem(STUDENT_JWT_KEY);
+        return null;
+      }
+      return { token: tok, until: (json.exp || 0) * 1000 };
+    } catch (_) {
+      return null;
+    }
+  }
+
   async function hasLabSession() {
     try {
+      if (readStudentJwt()) return true;
       const match = await bindingMatches();
       if (!match.ok) return false;
       const blob = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
@@ -223,9 +242,6 @@
         return false;
       }
       if (sess.device && match.bind.deviceId && sess.device !== match.bind.deviceId) return false;
-      if (sess.ip && match.bind.ip && sess.ip !== "unknown" && match.bind.ip !== "unknown" && sess.ip !== match.bind.ip) {
-        return false;
-      }
       return true;
     } catch (_) {
       return false;
@@ -233,6 +249,8 @@
   }
 
   async function sessionUntil() {
+    const jwtSess = readStudentJwt();
+    if (jwtSess) return jwtSess.until;
     try {
       const blob = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       const sess = await unwrapWithPepper(blob);
@@ -244,7 +262,7 @@
 
   async function redeemCode(raw) {
     const match = await bindingMatches();
-    if (!match.ok) return { ok: false, error: "Confirm this device and IP first." };
+    if (!match.ok) return { ok: false, error: "Confirm this device first." };
     const checked = await verifyIssuedCode(raw);
     if (!checked.ok) return checked;
     const hash = await sha256Hex(checked.code);
@@ -254,6 +272,23 @@
     });
     if (!row) {
       return { ok: false, error: "This code was not issued by the GitHub owner." };
+    }
+    try {
+      const base = await getApiBase();
+      if (base) {
+        const res = await fetch(base + "/api/redeem", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: checked.code }),
+        });
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          return { ok: false, error: data.error || "This code was already used." };
+        }
+        if (data.token) sessionStorage.setItem(STUDENT_JWT_KEY, data.token);
+      }
+    } catch (e) {
+      return { ok: false, error: "Could not reach the lab server. Try again." };
     }
     const device = match.bind.deviceId;
     const ip = match.bind.ip;
@@ -295,6 +330,7 @@
 
   function lockLabs() {
     localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(STUDENT_JWT_KEY);
   }
 
   const GATE_SALT = enc.encode("python-strudy-teacher-v1");
@@ -391,6 +427,7 @@
 
   /* ---------- Teacher backend (no browser tokens) ---------- */
   const TEACHER_JWT_KEY = "ps.v1.teacherJwt";
+  const STUDENT_JWT_KEY = "ps.v1.studentJwt";
   let apiBaseCache = null;
 
   function captureTeacherJwt() {
@@ -416,19 +453,9 @@
       apiBaseCache = location.origin.replace(/\/$/, "");
       return apiBaseCache;
     }
-    try {
-      const res = await fetch("assets/teacher-api.json", { cache: "no-store" });
-      if (!res.ok) {
-        apiBaseCache = "";
-        return "";
-      }
-      const data = await res.json();
-      apiBaseCache = String(data.apiBase || "").replace(/\/$/, "");
-      return apiBaseCache;
-    } catch (_) {
-      apiBaseCache = "";
-      return "";
-    }
+    // Student redeem / lab files go to the hosted backend. This is not a secret.
+    apiBaseCache = "https://python-strudy-backend.vercel.app";
+    return apiBaseCache;
   }
 
   async function teacherLoginUrl() {
@@ -658,9 +685,7 @@
     if (now.deviceId !== b.deviceId) return { ok: false, reason: "device", now: now, bind: b };
     if (now.kind !== b.kind) return { ok: false, reason: "kind", now: now, bind: b };
     if (now.browser !== b.browser) return { ok: false, reason: "browser", now: now, bind: b };
-    if (now.ip !== "unknown" && b.ip !== "unknown" && now.ip !== b.ip) {
-      return { ok: false, reason: "ip", now: now, bind: b };
-    }
+    // IP is a hint only (VPN / campus NAT). Device fingerprint is the lock.
     return { ok: true, now: now, bind: b };
   }
 
@@ -691,6 +716,22 @@
   }
 
   async function decryptLabFile(path) {
+    const sess = readStudentJwt();
+    const base = await getApiBase();
+    if (sess && base) {
+      const res = await fetch(base + "/api/labs/file?path=" + encodeURIComponent(path), {
+        headers: { Authorization: "Bearer " + sess.token },
+        cache: "no-store",
+      });
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) throw new Error(data.error || "Lab file blocked");
+      if (data.kind === "text") return data.content;
+      if (data.kind === "base64") {
+        const bin = atob(data.content || "");
+        return bin;
+      }
+      return data.content || null;
+    }
     const pack = await loadLabsVault();
     const item = pack.files && pack.files[path];
     if (!item) return null;

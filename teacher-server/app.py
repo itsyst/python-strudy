@@ -38,6 +38,9 @@ APP_ID = _env("GITHUB_APP_ID")
 PRIVATE_KEY_PEM = _env("GITHUB_PRIVATE_KEY").replace("\\n", "\n")
 
 ISSUED_PATH = "assets/issued.json"
+USED_PATH = "assets/used-ledger.json"
+REVOKED_PATH = "assets/revoked-jti.json"
+LABS_REPO = _env("GITHUB_LABS_REPO", "python-strudy-labs")
 HERE = _Path(__file__).resolve().parent
 TTL_MS = 3 * 24 * 60 * 60 * 1000
 ALPH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -162,6 +165,65 @@ def _put_issued(token: str, issued: list[dict], sha: str | None) -> None:
         raise RuntimeError(f"Publish issued.json failed ({r.status_code}): {r.text[:240]}")
 
 
+
+def _get_json_file(token: str, repo: str, path: str) -> tuple[dict, str | None]:
+    url = f"https://api.github.com/repos/{OWNER}/{repo}/contents/{path}"
+    r = requests.get(url, headers=_gh_headers(token), timeout=20)
+    if r.status_code == 404:
+        return {}, None
+    if r.status_code >= 400:
+        raise RuntimeError(f"Read {path} failed ({r.status_code}): {r.text[:200]}")
+    data = r.json()
+    content = base64.b64decode(data["content"]).decode("utf-8")
+    parsed = json.loads(content) if content.strip() else {}
+    if not isinstance(parsed, dict):
+        parsed = {}
+    return parsed, data.get("sha")
+
+
+def _put_json_file(token: str, repo: str, path: str, obj: dict, sha: str | None, message: str) -> None:
+    body = json.dumps(obj, indent=2) + "\n"
+    payload: dict[str, Any] = {
+        "message": message,
+        "content": base64.b64encode(body.encode("utf-8")).decode("ascii"),
+    }
+    if sha:
+        payload["sha"] = sha
+    url = f"https://api.github.com/repos/{OWNER}/{repo}/contents/{path}"
+    r = requests.put(url, headers=_gh_headers(token), json=payload, timeout=20)
+    if r.status_code >= 400:
+        raise RuntimeError(f"Write {path} failed ({r.status_code}): {r.text[:240]}")
+
+
+def _get_lab_file(token: str, path: str) -> tuple[str, str]:
+    rel = str(path or "").replace("\\", "/").lstrip("/")
+    if not rel.startswith("labs/") or ".." in rel or rel.endswith("/"):
+        raise ValueError("Invalid lab path")
+    url = f"https://api.github.com/repos/{OWNER}/{LABS_REPO}/contents/{rel}"
+    r = requests.get(url, headers=_gh_headers(token), timeout=20)
+    if r.status_code == 404:
+        raise FileNotFoundError(rel)
+    if r.status_code >= 400:
+        raise RuntimeError(f"Lab fetch failed ({r.status_code}): {r.text[:200]}")
+    data = r.json()
+    raw = base64.b64decode(data["content"])
+    # text if decodes, else base64 for images
+    try:
+        text = raw.decode("utf-8")
+        if "\x00" not in text:
+            return "text", text
+    except UnicodeDecodeError:
+        pass
+    return "base64", base64.b64encode(raw).decode("ascii")
+
+
+def normalize_code(raw: str) -> str:
+    s = "".join(ch for ch in str(raw or "").upper() if ch.isalnum())
+    if len(s) != 8:
+        return ""
+    return s[:4] + "-" + s[4:]
+
+
 def _teacher_jwt(login: str, name: str, avatar: str) -> str:
     now = int(time.time())
     return jwt.encode(
@@ -169,6 +231,8 @@ def _teacher_jwt(login: str, name: str, avatar: str) -> str:
             "login": login,
             "name": name,
             "avatar": avatar,
+            "role": "teacher",
+            "jti": secrets.token_urlsafe(18),
             "iat": now,
             "exp": now + 12 * 3600,
             "iss": "python-strudy-teacher",
@@ -176,6 +240,63 @@ def _teacher_jwt(login: str, name: str, avatar: str) -> str:
         app.secret_key,
         algorithm="HS256",
     )
+
+
+def _student_jwt(code_hash: str) -> str:
+    now = int(time.time())
+    return jwt.encode(
+        {
+            "role": "student",
+            "hash": code_hash,
+            "jti": secrets.token_urlsafe(18),
+            "iat": now,
+            "exp": now + 3 * 24 * 3600,
+            "iss": "python-strudy-student",
+        },
+        app.secret_key,
+        algorithm="HS256",
+    )
+
+
+_revoked_cache: tuple[float, set[str]] | None = None
+
+
+def _revoked_jtis() -> set[str]:
+    global _revoked_cache
+    now = time.time()
+    if _revoked_cache and now - _revoked_cache[0] < 30:
+        return _revoked_cache[1]
+    try:
+        token = _installation_token()
+        data, _sha = _get_json_file(token, REPO, REVOKED_PATH)
+        rows = data.get("revoked") if isinstance(data, dict) else []
+        out = set()
+        cutoff = int(now)
+        if isinstance(rows, list):
+            for x in rows:
+                if isinstance(x, str):
+                    out.add(x)
+                elif isinstance(x, dict) and x.get("jti") and int(x.get("exp") or 0) >= cutoff:
+                    out.add(str(x["jti"]))
+        _revoked_cache = (now, out)
+        return out
+    except Exception:
+        return _revoked_cache[1] if _revoked_cache else set()
+
+
+def _bearer_payload() -> dict | None:
+    auth = request.headers.get("Authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        return None
+    raw = auth.split(" ", 1)[1].strip()
+    try:
+        data = jwt.decode(raw, app.secret_key, algorithms=["HS256"])
+    except Exception:
+        return None
+    jti = str(data.get("jti") or "")
+    if jti and jti in _revoked_jtis():
+        return None
+    return data
 
 
 def teacher_identity() -> dict[str, str] | None:
@@ -186,13 +307,11 @@ def teacher_identity() -> dict[str, str] | None:
             "name": str(session.get("github_name") or login),
             "avatar": str(session.get("github_avatar") or ""),
         }
-    auth = request.headers.get("Authorization") or ""
-    if auth.lower().startswith("bearer "):
-        raw = auth.split(" ", 1)[1].strip()
-        try:
-            data = jwt.decode(raw, app.secret_key, algorithms=["HS256"])
-        except Exception:
+    data = _bearer_payload()
+    if not data or data.get("role") not in (None, "teacher"):
+        if data and data.get("role") != "teacher":
             return None
+    if data:
         login = str(data.get("login") or "").lower()
         if login == TEACHER_LOGIN:
             return {
@@ -201,6 +320,13 @@ def teacher_identity() -> dict[str, str] | None:
                 "avatar": str(data.get("avatar") or ""),
             }
     return None
+
+
+def student_identity() -> dict | None:
+    data = _bearer_payload()
+    if not data or data.get("role") != "student":
+        return None
+    return data
 
 
 def require_teacher() -> bool:
@@ -361,6 +487,29 @@ def api_session():
 @app.post("/api/logout")
 def api_logout():
     session.clear()
+    data = None
+    auth = request.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        raw = auth.split(" ", 1)[1].strip()
+        try:
+            data = jwt.decode(raw, app.secret_key, algorithms=["HS256"], options={"verify_exp": False})
+        except Exception:
+            data = None
+    if data and data.get("jti"):
+        try:
+            token = _installation_token()
+            doc, sha = _get_json_file(token, REPO, REVOKED_PATH)
+            rows = doc.get("revoked") if isinstance(doc, dict) else []
+            if not isinstance(rows, list):
+                rows = []
+            now = int(time.time())
+            rows = [x for x in rows if isinstance(x, dict) and int(x.get("exp") or 0) >= now]
+            rows.append({"jti": str(data["jti"]), "exp": int(data.get("exp") or now + 12 * 3600)})
+            _put_json_file(token, REPO, REVOKED_PATH, {"revoked": rows[-400:]}, sha, "Revoke teacher/student session")
+            global _revoked_cache
+            _revoked_cache = None
+        except Exception:
+            pass
     return jsonify({"ok": True})
 
 
@@ -445,6 +594,96 @@ def api_codes():
             "issued": merged,
         }
     )
+
+
+
+@app.post("/api/redeem")
+def api_redeem():
+    if not _origin_ok():
+        return jsonify({"ok": False, "error": "Origin not allowed."}), 403
+    body = request.get_json(silent=True) or {}
+    code = normalize_code(body.get("code") or "")
+    if not code:
+        return jsonify({"ok": False, "error": "Use a code like ABCD-EFGH."}), 400
+    payload, check = code[:4], code[5:]
+    now_ms = int(time.time() * 1000)
+    bucket = now_ms // TTL_MS
+    valid_bucket = None
+    for b in (bucket, bucket - 1):
+        if b < 0:
+            continue
+        if _checksum(payload, b) == check:
+            valid_bucket = b
+            break
+    if valid_bucket is None:
+        return jsonify({"ok": False, "error": "Invalid or expired code."}), 400
+    code_hash = _sha256_hex(code)
+    try:
+        token = _installation_token()
+        issued_doc, _ = _get_json_file(token, REPO, ISSUED_PATH)
+        issued = issued_doc.get("issued") if isinstance(issued_doc, dict) else []
+        row = None
+        if isinstance(issued, list):
+            for x in issued:
+                if isinstance(x, dict) and x.get("hash") == code_hash and now_ms <= int(x.get("expires") or 0):
+                    row = x
+                    break
+        if not row:
+            return jsonify({"ok": False, "error": "This code was not issued by the GitHub owner."}), 400
+        used_doc, used_sha = _get_json_file(token, REPO, USED_PATH)
+        used = used_doc.get("used") if isinstance(used_doc, dict) else []
+        if not isinstance(used, list):
+            used = []
+        hashes = {str(x.get("hash") if isinstance(x, dict) else x) for x in used}
+        if code_hash in hashes:
+            return jsonify({"ok": False, "error": "This code was already used."}), 409
+        used.append({"hash": code_hash, "at": now_ms})
+        _put_json_file(
+            token,
+            REPO,
+            USED_PATH,
+            {"used": used[-2000:], "note": "Hashes of redeemed lab codes. Global one-time ledger."},
+            used_sha,
+            "Record redeemed lab code",
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 502
+    until = (valid_bucket + 1) * TTL_MS
+    tok = _student_jwt(code_hash)
+    return jsonify({"ok": True, "token": tok, "until": until})
+
+
+@app.get("/api/student")
+def api_student():
+    ident = student_identity()
+    if not ident:
+        return jsonify({"ok": False}), 401
+    return jsonify({"ok": True, "until": ident.get("exp", 0) * 1000})
+
+
+@app.get("/api/labs/file")
+def api_lab_file():
+    ident = student_identity()
+    if not ident:
+        return jsonify({"ok": False, "error": "Unlock labs with a passcode first."}), 401
+    path = request.args.get("path") or ""
+    try:
+        token = _installation_token()
+        kind, body = _get_lab_file(token, path)
+    except FileNotFoundError:
+        return jsonify({"ok": False, "error": "Lab file not found."}), 404
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    except Exception as e:
+        msg = str(e)
+        if "404" in msg or "Not Found" in msg:
+            return jsonify({
+                "ok": False,
+                "error": "Lab store is private. Install GitHub App python-strudy-teacher on itsyst/python-strudy-labs.",
+            }), 503
+        return jsonify({"ok": False, "error": msg}), 502
+    return jsonify({"ok": True, "path": path, "kind": kind, "content": body})
+
 
 
 if __name__ == "__main__":
