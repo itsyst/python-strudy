@@ -404,7 +404,7 @@ async function openFile(path, name) {
       const details = $("stdin-details");
       if (details) details.open = /\binput\s*\(/.test(text);
       termClear();
-      termLine("sys", "File loaded. Press Run, then use the prompt like a local shell.");
+      termLine("sys", "File loaded. Run, or type:  python this.py   ·  ls   ·  help");
     } else {
       $("code-content").innerHTML = highlight(text, path);
     }
@@ -531,6 +531,160 @@ function bindIO(stdinText) {
   });
 }
 
+function dirname(path) {
+  const i = String(path || "").lastIndexOf("/");
+  return i === -1 ? "" : path.slice(0, i);
+}
+
+function allItems() {
+  const out = [];
+  (SECTIONS || []).forEach(function (sec) {
+    (cache[sec] || []).forEach(function (g) {
+      (g.items || []).forEach(function (f) {
+        out.push({ name: f.name, path: f.path, group: g.group, section: sec });
+      });
+    });
+  });
+  return out;
+}
+
+function filesInDir(dir) {
+  return allItems().filter(function (f) {
+    return dirname(f.path) === dir && /\.py$/i.test(f.name);
+  });
+}
+
+function aliasNames(name) {
+  const extras = [];
+  const m = String(name).match(/^labb[_-]?(\d+[a-z]?)\.py$/i);
+  if (m) {
+    extras.push("lab" + m[1].toLowerCase() + ".py");
+    extras.push("labb" + m[1].toLowerCase() + ".py");
+  }
+  const u = String(name).match(/^uppgift[_-]?(\d+[a-z]?)\.py$/i);
+  if (u) extras.push("uppgift" + u[1].toLowerCase() + ".py");
+  return extras;
+}
+
+function importedModuleFiles(src) {
+  const names = [];
+  const re = /(?:^|\n)\s*(?:from|import)\s+([A-Za-z_][A-Za-z0-9_]*)/g;
+  let m;
+  while ((m = re.exec(src || ""))) {
+    const n = m[1];
+    if (
+      [
+        "sys", "os", "math", "re", "json", "typing", "abc", "copy", "random",
+        "itertools", "functools", "collections", "datetime", "unittest",
+        "argparse", "traceback", "importlib", "pathlib", "numpy", "cv2",
+      ].indexOf(n) === -1
+    ) {
+      names.push(n + ".py");
+    }
+  }
+  return names;
+}
+
+function findFiles(query) {
+  const raw = String(query || "").trim();
+  if (!raw) return [];
+  const q = raw.toLowerCase().replace(/\s+/g, "");
+  const q2 = q.replace(/\.py$/, "");
+  const num = q2.replace(/^(uppgift|labbar|labb|labs|lab)/, "");
+  const dir = dirname(currentPath);
+  return allItems()
+    .filter(function (f) { return /\.py$/i.test(f.name); })
+    .map(function (f) {
+      const name = f.name.toLowerCase();
+      const base = name.replace(/\.py$/, "");
+      const path = f.path.toLowerCase();
+      let s = 0;
+      if (name === q || name === q + ".py" || base === q2) s = 100;
+      else if (dir && dirname(f.path) === dir && (base.indexOf(q2) !== -1 || q2.indexOf(base) !== -1)) s = 80;
+      else if (base.indexOf(q2) !== -1) s = 50;
+      else if (path.indexOf(q2) !== -1) s = 40;
+      else if (num && (base.indexOf(num) !== -1 || path.indexOf("labb-" + num) !== -1 || path.indexOf("labb_" + num) !== -1)) s = 30;
+      return { f: f, s: s };
+    })
+    .filter(function (x) { return x.s > 0; })
+    .sort(function (a, b) { return b.s - a.s; })
+    .map(function (x) { return x.f; });
+}
+
+async function fetchText(path) {
+  const res = await fetch(path);
+  if (!res.ok) return null;
+  return res.text();
+}
+
+async function mountProject(mainPath, mainSrc) {
+  const dir = dirname(mainPath);
+  const mainName = (mainPath.split("/").pop() || "main.py");
+  const siblings = filesInDir(dir);
+  try {
+    pyodide.FS.mkdirTree("/work");
+  } catch (_) {}
+  const written = {};
+  async function write(name, text) {
+    pyodide.FS.writeFile("/work/" + name, text);
+    written[name] = true;
+    aliasNames(name).forEach(function (alias) {
+      if (!written[alias]) {
+        pyodide.FS.writeFile("/work/" + alias, text);
+        written[alias] = true;
+      }
+    });
+  }
+  await write(mainName, mainSrc);
+  for (let i = 0; i < siblings.length; i++) {
+    const f = siblings[i];
+    if (f.path === mainPath) continue;
+    try {
+      const text = await fetchText(f.path);
+      if (text != null) await write(f.name, text);
+    } catch (_) {}
+  }
+  const hints = importedModuleFiles(mainSrc);
+  for (let i = 0; i < hints.length; i++) {
+    const name = hints[i];
+    if (written[name]) continue;
+    const tries = dir
+      ? [dir + "/" + name, dirname(dir) + "/" + name, name]
+      : [name];
+    for (let t = 0; t < tries.length; t++) {
+      try {
+        const text = await fetchText(tries[t]);
+        if (text != null) {
+          await write(name, text);
+          break;
+        }
+      } catch (_) {}
+    }
+  }
+  return Object.keys(written);
+}
+
+function formatPyError(err) {
+  const msg = (err && err.message) || String(err);
+  const m = msg.match(/ModuleNotFoundError: No module named '([^']+)'/);
+  if (!m) return msg;
+  const mod = m[1];
+  const dir = dirname(currentPath) || "this folder";
+  return (
+    msg +
+    "\n\nThe file " +
+    mod +
+    ".py is not next to " +
+    (currentName || "this script") +
+    ".\nPut " +
+    mod +
+    ".py in " +
+    dir +
+    "/ (same as a local project), refresh, then Run again.\n" +
+    "In the terminal you can also:  ls   or   python other_file.py"
+  );
+}
+
 async function runPlayground() {
   if (running) return;
   const editor = $("code-editor");
@@ -543,15 +697,28 @@ async function runPlayground() {
     const src = editor.value;
     currentCode = src;
     const stdin = ($("stdin-box") && $("stdin-box").value) || "";
-    termLine("sys", "$ python " + currentName);
+    const fileName = currentName || "main.py";
+    termLine("sys", "$ python " + fileName);
     bindIO(stdin);
-    pyodide.globals.set("_user_src", src);
-    pyodide.globals.set("_user_file", currentName);
+    const mounted = await mountProject(currentPath || fileName, src);
+    pyodide.globals.set("_user_file", fileName);
     await pyodide.runPythonAsync(
-      "_playground_ns = {'__name__': '__main__', '__file__': _user_file}\nexec(_user_src, _playground_ns)"
+      "import sys, os, runpy\n" +
+        "os.chdir('/work')\n" +
+        "if '/work' not in sys.path:\n" +
+        "    sys.path.insert(0, '/work')\n" +
+        "for _n, _m in list(sys.modules.items()):\n" +
+        "    _f = getattr(_m, '__file__', '') or ''\n" +
+        "    if _f.startswith('/work/'):\n" +
+        "        del sys.modules[_n]\n" +
+        "ns = runpy.run_path(_user_file, run_name='__main__')\n" +
+        "globals()['_playground_ns'] = ns\n"
     );
+    if (mounted.length > 1) {
+      termLine("sys", "loaded " + mounted.filter(function (n) { return n.endsWith(".py"); }).join(", "));
+    }
   } catch (err) {
-    termLine("err", (err && err.message) || String(err));
+    termLine("err", formatPyError(err));
   } finally {
     running = false;
     if (runBtn) runBtn.textContent = "▶ Run";
@@ -564,20 +731,60 @@ function resetPlayground() {
   currentCode = originalCode;
   if ($("stdin-box")) $("stdin-box").value = "";
   termClear();
-  termLine("sys", "Reset to the original file. Press Run to execute again.");
+  termLine("sys", "Reset to the original file. Press Run, or type: python other.py");
 }
 
-async function runRepl(src) {
-  src = String(src || "").replace(/\s+$/, "");
-  if (!src || running) return;
-  running = true;
-  try {
-    await warmupPyodide();
-    termLine("in", ">>> " + src);
-    bindIO(($("stdin-box") && $("stdin-box").value) || "");
-    pyodide.globals.set("_repl_src", src);
-    await pyodide.runPythonAsync(
-      "import ast as _ast\n" +
+function printHelp() {
+  termLine(
+    "sys",
+    "Terminal (like a local shell)\n" +
+      "  ls                  files in this folder\n" +
+      "  python labb_8a.py   run a file\n" +
+      "  uppgift 8a          jump to a matching lab/exam file\n" +
+      "  help                this text\n" +
+      "After Run, type Python as usual:  add(2, 3)"
+  );
+}
+
+function printLs() {
+  const dir = dirname(currentPath);
+  const files = (dir ? filesInDir(dir) : []).map(function (f) { return f.name; });
+  if (!files.length) {
+    termLine("sys", "No .py files in this folder. Open a file first.");
+    return;
+  }
+  termLine("sys", (dir || ".") + "\n  " + files.join("\n  "));
+}
+
+async function openAndRun(item) {
+  if (!item) return;
+  await openFile(item.path, item.name);
+  await runPlayground();
+}
+
+async function runNamedFile(query) {
+  const hits = findFiles(query);
+  if (!hits.length) {
+    termLine("err", "No file matching '" + query + "'. Try  ls");
+    return;
+  }
+  if (hits.length > 1 && hits[0].name.toLowerCase() !== String(query).toLowerCase() &&
+      hits[0].name.toLowerCase() !== String(query).toLowerCase() + ".py") {
+    termLine(
+      "sys",
+      "Several matches for '" + query + "':\n  " +
+        hits.slice(0, 8).map(function (f) { return f.path; }).join("\n  ") +
+        "\nType: python " + hits[0].name
+    );
+    return;
+  }
+  await openAndRun(hits[0]);
+}
+
+async function evalPython(src) {
+  pyodide.globals.set("_repl_src", src);
+  await pyodide.runPythonAsync(
+    "import ast as _ast\n" +
       "_src = _repl_src\n" +
       "try:\n" +
       "    _tree = _ast.parse(_src, mode='eval')\n" +
@@ -586,9 +793,65 @@ async function runRepl(src) {
       "        print(repr(_val))\n" +
       "except SyntaxError:\n" +
       "    exec(_src, _playground_ns)\n"
-    );
+  );
+}
+
+async function runRepl(src) {
+  src = String(src || "").replace(/\s+$/, "");
+  if (!src || running) return;
+  running = true;
+  try {
+    await warmupPyodide();
+    termLine("in", "❯ " + src);
+    bindIO(($("stdin-box") && $("stdin-box").value) || "");
+    const t = src.trim();
+    if (/^(help|\?)$/i.test(t)) {
+      printHelp();
+      return;
+    }
+    if (/^(ls|dir)$/i.test(t)) {
+      printLs();
+      return;
+    }
+    const runm = t.match(/^(python3?|py|run)\s+(.+)$/i);
+    if (runm) {
+      running = false;
+      await runNamedFile(runm[2].replace(/^["']|["']$/g, ""));
+      return;
+    }
+    if (/^[A-Za-z0-9_./-]+\.py$/i.test(t)) {
+      running = false;
+      await runNamedFile(t);
+      return;
+    }
+    if (/^(uppgift|labbar|labb|labs|lab)\s*\d+[a-z]?\s*$/i.test(t)) {
+      running = false;
+      await runNamedFile(t);
+      return;
+    }
+    try {
+      await evalPython(t);
+    } catch (err) {
+      const hits = findFiles(t);
+      if (hits.length === 1) {
+        running = false;
+        await openAndRun(hits[0]);
+        return;
+      }
+      if (hits.length > 1) {
+        termLine(
+          "sys",
+          "Not Python — matching files:\n  " +
+            hits.slice(0, 8).map(function (f) { return f.path; }).join("\n  ") +
+            "\nType: python " + hits[0].name
+        );
+        return;
+      }
+      termLine("err", formatPyError(err));
+      termLine("sys", "Tip:  ls  ·  python labb_8a.py  ·  help");
+    }
   } catch (err) {
-    termLine("err", (err && err.message) || String(err));
+    termLine("err", formatPyError(err));
   } finally {
     running = false;
   }
@@ -624,14 +887,19 @@ function wireToggle() {
 
 function wirePlayground() {
   const form = $("repl-form");
-  if (form) {
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const input = $("term-in");
-      if (!input) return;
-      const src = input.value;
-      input.value = "";
-      runRepl(src);
+  const termIn = $("term-in");
+  function submitTerm(e) {
+    if (e) e.preventDefault();
+    const input = $("term-in");
+    if (!input) return;
+    const src = input.value;
+    input.value = "";
+    runRepl(src);
+  }
+  if (form) form.addEventListener("submit", submitTerm);
+  if (termIn) {
+    termIn.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) submitTerm(e);
     });
   }
   const editor = $("code-editor");
