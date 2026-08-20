@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import re
 import os
 import secrets
 import time
@@ -88,11 +89,11 @@ def _checksum(payload: str, bucket: int) -> str:
 
 def mint_code(now_ms: int | None = None) -> dict[str, Any]:
     now_ms = now_ms or int(time.time() * 1000)
-    rnd = secrets.token_bytes(8)
-    payload = _bytes_to_code_chars(rnd, 4)
+    rnd = secrets.token_bytes(16)
+    payload = _bytes_to_code_chars(rnd, 12)
     bucket = _time_bucket(now_ms)
     check = _checksum(payload, bucket)
-    code = f"{payload}-{check}"
+    code = f"{payload[:4]}-{payload[4:8]}-{payload[8:12]}-{check}"
     return {
         "code": code,
         "hash": _sha256_hex(code),
@@ -196,8 +197,8 @@ def _put_json_file(token: str, repo: str, path: str, obj: dict, sha: str | None,
 
 
 def _get_lab_file(token: str, path: str) -> tuple[str, str]:
-    rel = str(path or "").replace("\\", "/").lstrip("/")
-    if not rel.startswith("labs/") or ".." in rel or rel.endswith("/"):
+    rel = str(path or "").replace('\\', "/").lstrip("/")
+    if ".." in rel or "//" in rel or rel.endswith("/") or not re.fullmatch(r"labs/[A-Za-z0-9._/-]+", rel):
         raise ValueError("Invalid lab path")
     url = f"https://api.github.com/repos/{OWNER}/{LABS_REPO}/contents/{rel}"
     r = requests.get(url, headers=_gh_headers(token), timeout=20)
@@ -219,9 +220,11 @@ def _get_lab_file(token: str, path: str) -> tuple[str, str]:
 
 def normalize_code(raw: str) -> str:
     s = "".join(ch for ch in str(raw or "").upper() if ch.isalnum())
-    if len(s) != 8:
-        return ""
-    return s[:4] + "-" + s[4:]
+    if len(s) == 8:
+        return s[:4] + "-" + s[4:]
+    if len(s) == 16:
+        return f"{s[:4]}-{s[4:8]}-{s[8:12]}-{s[12:]}"
+    return ""
 
 
 def _teacher_jwt(login: str, name: str, avatar: str) -> str:
@@ -605,7 +608,8 @@ def api_redeem():
     code = normalize_code(body.get("code") or "")
     if not code:
         return jsonify({"ok": False, "error": "Use a code like ABCD-EFGH."}), 400
-    payload, check = code[:4], code[5:]
+    compact = "".join(ch for ch in code if ch.isalnum())
+    payload, check = compact[:-4], compact[-4:]
     now_ms = int(time.time() * 1000)
     bucket = now_ms // TTL_MS
     valid_bucket = None
@@ -679,7 +683,7 @@ def api_lab_file():
         if "404" in msg or "Not Found" in msg:
             return jsonify({
                 "ok": False,
-                "error": "Lab store is private. Install GitHub App python-strudy-teacher on itsyst/python-strudy-labs.",
+                "error": "Labs are not available yet. Ask the teacher to finish setup.",
             }), 503
         return jsonify({"ok": False, "error": msg}), 502
     return jsonify({"ok": True, "path": path, "kind": kind, "content": body})
