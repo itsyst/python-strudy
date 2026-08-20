@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher · Python Study</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="https://itsyst.github.io/python-strudy/assets/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    a.tool-btn.run-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: inherit;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar" role="navigation">
+    <div class="nav-inner">
+      <a class="nav-brand" href="index.html" title="Home" style="text-decoration:none">
+        <span class="logo-mark" aria-hidden="true">P</span>
+        <span class="brand-text">Python Study</span>
+      </a>
+      <div class="nav-links">
+        <a class="nav-btn" href="index.html">Student site</a>
+        <span class="nav-btn active">Teacher</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+    <section class="view active admin-page">
+      <p class="hero-badge">Teacher desk</p>
+      <h1>Lab passcodes</h1>
+      <p class="hero-sub" style="margin-left:0;text-align:left">
+        Only the GitHub owner <strong>@itsyst</strong>, signed in via the teacher backend, can generate lab codes.
+        No personal access tokens are ever stored in the browser.
+      </p>
+
+      <div id="admin-panel" class="admin-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-bottom">
+      <p>Teacher desk: GitHub owner @itsyst only · tokens never leave the server</p>
+    </div>
+  </footer>
+
+  <script src="https://itsyst.github.io/python-strudy/assets/crypto.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function fmt(ts) {
+      if (!ts) return "—";
+      return new Date(ts).toLocaleString();
+    }
+
+    function queryErr() {
+      const p = new URLSearchParams(location.search);
+      if (p.get("err") === "forbidden") {
+        const who = p.get("login") || "someone else";
+        history.replaceState({}, "", location.pathname);
+        return "Signed in as @" + who + ". Only @itsyst is allowed.";
+      }
+      return "";
+    }
+
+    async function render() {
+      const api = await PSCrypto.getApiBase();
+      if (!api) {
+        renderSetup();
+        return;
+      }
+      const sess = await PSCrypto.teacherSession();
+      if (!sess.ok) {
+        await renderLogin(queryErr() || sess.error || "");
+        return;
+      }
+      renderDesk(sess);
+    }
+
+    function renderSetup() {
+      $("admin-panel").innerHTML = `
+        <div class="admin-card">
+          <h2>Backend not configured</h2>
+          <p class="muted">
+            Personal access tokens are no longer accepted in the browser.
+            Deploy <code>teacher-server/</code> (GitHub OAuth + GitHub App), then set
+            <code>apiBase</code> in <code>assets/teacher-api.json</code>.
+          </p>
+        </div>`;
+    }
+
+    async function renderLogin(errText) {
+      let href = "/auth/github";
+      try {
+        href = await PSCrypto.teacherLoginUrl();
+      } catch (_) {}
+      $("admin-panel").innerHTML = `
+        <div class="admin-card" id="login-card">
+          <h2>Sign in with GitHub</h2>
+          <p class="muted">
+            You will be redirected to GitHub. Only account <strong>@itsyst</strong> is accepted.
+            No token is ever pasted or stored in this browser.
+          </p>
+          <p class="form-error" id="err" ${errText ? "" : "hidden"}>${errText || ""}</p>
+          <a class="tool-btn run-btn" id="github-login" href="${href}">Sign in with GitHub</a>
+        </div>`;
+    }
+
+    async function renderDesk(sess) {
+      const listed = await PSCrypto.listIssuedPublic();
+      const rows = (listed.ok ? listed.codes : []).slice().reverse();
+      const last = JSON.parse(sessionStorage.getItem("ps.v1.lastcodes") || "[]");
+      $("admin-panel").innerHTML = `
+        <div class="admin-card">
+          <h2>Signed in as @${sess.login}</h2>
+          <p class="muted">Repo owner of itsyst/python-strudy. Codes are published as hashes only — the browser never holds a GitHub token.</p>
+          <button class="tool-btn" type="button" id="lock-btn">Sign out</button>
+        </div>
+        <form class="admin-card" id="mint-form">
+          <h2>Generate codes</h2>
+          <p class="muted">Published to <code>assets/issued.json</code> via the GitHub App, then share the codes on Discord.</p>
+          <label class="field">How many
+            <input type="number" id="count" min="1" max="20" value="5" />
+          </label>
+          <p class="form-error" id="err" hidden></p>
+          <div class="btn-row">
+            <button class="tool-btn run-btn" type="submit">Generate and publish</button>
+            <button class="tool-btn" type="button" id="copy-live">Copy last codes</button>
+          </div>
+          <div id="fresh" class="code-list">${
+            last.map((c) => `<button type="button" class="code-chip" data-code="${c.code}"><code>${c.code}</code><span>copy</span></button>`).join("")
+          }</div>
+        </form>
+        <div class="admin-card">
+          <h2>Issued on GitHub</h2>
+          <p class="muted">${rows.length} live hashes in the repo (plaintext codes are not stored there)</p>
+          <ul class="vault-list">${
+            rows.length
+              ? rows.map((c) => `<li><code>${(c.hash || "").slice(0, 12)}</code><span>until ${fmt(c.expires)}</span></li>`).join("")
+              : "<li class='muted'>No issued codes yet.</li>"
+          }</ul>
+        </div>`;
+
+      $("lock-btn").onclick = async () => {
+        await PSCrypto.teacherLogout();
+        renderLogin();
+      };
+      $("mint-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const err = $("err");
+        err.hidden = true;
+        const res = await PSCrypto.generateOwnerCodes(Number($("count").value));
+        if (!res.ok) {
+          err.hidden = false;
+          err.textContent = res.error || "Code generation failed.";
+          return;
+        }
+        sessionStorage.setItem("ps.v1.lastcodes", JSON.stringify(res.codes));
+        renderDesk(sess);
+      };
+      $("copy-live").onclick = () => {
+        const text = last.map((c) => c.code).join("\n");
+        if (text) navigator.clipboard.writeText(text);
+      };
+      $("fresh").querySelectorAll(".code-chip").forEach((btn) => {
+        btn.onclick = () => navigator.clipboard.writeText(btn.dataset.code);
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
