@@ -367,14 +367,25 @@ a { color: var(--accent); }
   flex-wrap: wrap;
 }
 .viewer-title {
-  flex: 1;
+  flex: 1 1 auto;
+  margin: 0;
   font-size: 0.95rem;
   font-family: var(--mono);
   font-weight: 500;
-  word-break: break-all;
+  letter-spacing: 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
 }
-.viewer-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.viewer-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
 
 .tool-btn {
   min-height: 2.4rem;
@@ -753,6 +764,38 @@ a { color: var(--accent); }
   .nav-links.open { display: flex; }
   .nav-btn { height: 2.75rem; justify-content: space-between; }
   .search-wrap { flex: 1; width: auto; min-width: 8rem; }
+}
+
+@media (max-width: 640px) {
+  .viewer-toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "back title"
+      "actions actions";
+    gap: 0.55rem 0.6rem;
+    align-items: center;
+  }
+  .viewer-toolbar .back-btn { grid-area: back; }
+  .viewer-title {
+    grid-area: title;
+    width: 100%;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: normal;
+    overflow-wrap: normal;
+    font-size: 0.9rem;
+  }
+  .viewer-actions {
+    grid-area: actions;
+    width: 100%;
+  }
+  .viewer-actions .tool-btn {
+    flex: 1 1 auto;
+    min-width: 4.5rem;
+  }
 }
 
 @media (max-width: 480px) {
