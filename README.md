@@ -4,6 +4,8 @@ Student website for **TDDE24**. Live: https://itsyst.github.io/python-strudy/
 
 **For study only** — practice materials to help you prepare and pass the exam. Not an official course site.
 
+If this helps you, please **star the repo** ★ — it keeps the project visible and motivates updates.
+
 First visit: confirm **IP + device ID** (browsers cannot read a MAC address). Labs stay locked until a Discord passcode. Lab files on the website are served from an **encrypted vault** (`assets/labs-vault.json`), not from a raw `/labs/` fetch.
 
 ```powershell
@@ -26,3 +28,5 @@ node scripts/build-labs-vault.mjs
 © 2026 [itsyst](https://github.com/itsyst)
 
 **Support** · [Ko-fi](https://ko-fi.com/itsyst) · [Patreon](https://www.patreon.com/c/itsyst)
+
+**Star the repo** if you find it useful: [github.com/itsyst/python-strudy](https://github.com/itsyst/python-strudy)
