@@ -2,7 +2,7 @@
 
 Student website for **TDDE24** — exams, labs, exercises and seminars.
 
-Open any `.py` file to **edit and run it in the browser** (editor + terminal). No local Python install needed. No Node, npm, or Vite.
+Open any `.py` file to **edit and run it in the browser** (editor + terminal). No local Python install. No Node, npm, or Vite.
 
 **Live:** https://itsyst.github.io/python-strudy/
 
@@ -11,32 +11,37 @@ Open any `.py` file to **edit and run it in the browser** (editor + terminal). N
 
 ## Local (static site — do not run Vite)
 
-This repo is only HTML + JS. **Do not** run `npx vite`, `npm install`, or `npm run dev`. Those tools belong to a different kind of project and will fail on this one.
-
-```bash
-git pull
-python update_files.py    # refresh file list after adding files / folders
-python -m http.server 8000
-```
-
-Then open http://localhost:8000 in your browser.
-
-On Windows PowerShell:
+This repo is only HTML + JS. **Do not** run `npx vite`, `npm install`, or `npm run dev`.
 
 ```powershell
+cd python-strudy
+python update_files.py
 python -m http.server 8000
 ```
+
+Open http://localhost:8000
+
+## Labs lock + teacher codes
+
+Labs stay closed until a student enters a one-time passcode.
+
+1. Open [`admin.html`](admin.html) on **your** computer.
+2. Set a teacher PIN (stored as a hash; the code vault is AES-GCM encrypted in this browser).
+3. Generate codes (`ABCD-EFGH`). Copy them into Discord.
+4. A code is valid **3 days** if unused. Redeeming it **burns it on that device** and unlocks Labs for 3 days.
+
+There is no server and no database. Codes cannot be globally deleted for every student the instant one person uses them — that needs a backend. This design keeps honest students out of Labs and keeps PIN/codes off disk in plaintext.
+
+Teacher desk: http://localhost:8000/admin.html
 
 ## Folders
 
 | Folder | Menu |
 |--------|------|
-| `exams/` | Exams |
-| `labs/` | Labs |
-| `exercises/` | Exercises |
-| `seminars/` | Seminars |
-
-Any other top-level folder with `.py` / `.txt` / `.md` files is detected automatically.
+| `exams/` | Exams (open) |
+| `labs/` | Labs (passcode) |
+| `exercises/` | Exercises (open) |
+| `seminars/` | Seminars (open) |
 
 ```bash
 python update_files.py
@@ -47,7 +52,7 @@ git push
 
 ## In-browser Python
 
-`.py` files open in a split editor / terminal. **Run** executes the file, the prompt works like a local REPL, and a stdin box feeds `input()`. First load downloads the Python runtime (~10s).
+`.py` files open in a split editor / terminal. **Run** executes the file. First load downloads the Python runtime (~10s).
 
 ## GitHub Pages
 

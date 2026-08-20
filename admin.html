@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher · Python Study</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" role="navigation">
+    <a class="nav-brand" href="index.html" title="Home" style="text-decoration:none">
+      <span class="logo" aria-hidden="true">🐍</span>
+      <span class="brand-text">Python Study</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-btn" href="index.html">Student site</a>
+      <span class="nav-btn active">Teacher</span>
+    </div>
+  </nav>
+
+  <main id="app">
+    <section class="view active admin-page">
+      <p class="hero-badge">Teacher desk</p>
+      <h1>Lab passcodes</h1>
+      <p class="hero-sub" style="margin-left:0;text-align:left">
+        Codes are created on this computer, stored encrypted, and meant for Discord.
+        A code works for 3 days if unused, then dies. Using it on a student browser burns it there and unlocks Labs for 3 days.
+      </p>
+
+      <div id="admin-panel" class="admin-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-bottom">
+      <p>PIN and codes never leave this browser · AES-GCM + PBKDF2</p>
+    </div>
+  </footer>
+
+  <script src="assets/crypto.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let pinMemory = "";
+
+    function fmt(ts) {
+      if (!ts) return "—";
+      return new Date(ts).toLocaleString();
+    }
+
+    function render() {
+      const host = $("admin-panel");
+      if (!PSCrypto.hasTeacherPin()) {
+        host.innerHTML = `
+          <form class="admin-card" id="setup-form">
+            <h2>Create a teacher PIN</h2>
+            <p class="muted">At least 6 characters. It never stored in plaintext — only a hash plus an encrypted vault.</p>
+            <label class="field">PIN
+              <input type="password" id="pin1" minlength="6" autocomplete="new-password" required />
+            </label>
+            <label class="field">Repeat PIN
+              <input type="password" id="pin2" minlength="6" autocomplete="new-password" required />
+            </label>
+            <p class="form-error" id="err" hidden></p>
+            <button class="tool-btn run-btn" type="submit">Save PIN</button>
+          </form>`;
+        $("setup-form").onsubmit = async (e) => {
+          e.preventDefault();
+          const a = $("pin1").value, b = $("pin2").value;
+          const err = $("err");
+          if (a !== b) { err.hidden = false; err.textContent = "PINs do not match."; return; }
+          const res = await PSCrypto.setTeacherPin(a);
+          if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
+          pinMemory = a;
+          renderDesk();
+        };
+        return;
+      }
+      if (!pinMemory) {
+        host.innerHTML = `
+          <form class="admin-card" id="login-form">
+            <h2>Unlock vault</h2>
+            <p class="muted">Enter the PIN for this browser. A new computer needs a new PIN (the vault is local).</p>
+            <label class="field">PIN
+              <input type="password" id="pin" minlength="6" autocomplete="current-password" required />
+            </label>
+            <p class="form-error" id="err" hidden></p>
+            <button class="tool-btn run-btn" type="submit">Unlock</button>
+          </form>`;
+        $("login-form").onsubmit = async (e) => {
+          e.preventDefault();
+          const res = await PSCrypto.unlockTeacher($("pin").value);
+          const err = $("err");
+          if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
+          pinMemory = $("pin").value;
+          renderDesk();
+        };
+        return;
+      }
+      renderDesk();
+    }
+
+    async function renderDesk() {
+      const listed = await PSCrypto.listVault(pinMemory);
+      const rows = (listed.ok ? listed.codes : []).slice().reverse();
+      const live = rows.filter((c) => !c.expired);
+      const host = $("admin-panel");
+      host.innerHTML = `
+        <form class="admin-card" id="mint-form">
+          <h2>Generate codes</h2>
+          <p class="muted">Post these in Discord. Students unlock Labs with one code. Unused codes expire after 3 days.</p>
+          <label class="field">How many
+            <input type="number" id="count" min="1" max="20" value="5" />
+          </label>
+          <p class="form-error" id="err" hidden></p>
+          <div class="btn-row">
+            <button class="tool-btn run-btn" type="submit">Generate</button>
+            <button class="tool-btn" type="button" id="copy-live">Copy live codes</button>
+          </div>
+          <div id="fresh" class="code-list"></div>
+        </form>
+        <div class="admin-card">
+          <h2>Encrypted vault</h2>
+          <p class="muted">${live.length} live · ${rows.length} stored on this device</p>
+          <ul class="vault-list" id="vault">${
+            rows.length
+              ? rows.map((c) => `<li class="${c.expired ? "expired" : ""}"><code>${c.code}</code><span>${c.expired ? "expired" : "until " + fmt(c.expires)}</span></li>`).join("")
+              : "<li class='muted'>No codes yet.</li>"
+          }</ul>
+        </div>
+        <form class="admin-card" id="pin-form">
+          <h2>Change PIN</h2>
+          <label class="field">Current PIN
+            <input type="password" id="oldpin" minlength="6" autocomplete="current-password" required />
+          </label>
+          <label class="field">New PIN
+            <input type="password" id="newpin" minlength="6" autocomplete="new-password" required />
+          </label>
+          <p class="form-error" id="pin-err" hidden></p>
+          <div class="btn-row">
+            <button class="tool-btn" type="submit">Update PIN</button>
+            <button class="tool-btn" type="button" id="lock-btn">Lock desk</button>
+          </div>
+        </form>`;
+
+      $("mint-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const err = $("err");
+        err.hidden = true;
+        const res = await PSCrypto.generateCodes(pinMemory, $("count").value);
+        if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
+        $("fresh").innerHTML = res.codes.map((c) => `<button type="button" class="code-chip" data-code="${c.code}"><code>${c.code}</code><span>copy</span></button>`).join("");
+        $("fresh").querySelectorAll(".code-chip").forEach((btn) => {
+          btn.onclick = () => navigator.clipboard.writeText(btn.dataset.code);
+        });
+        renderDeskKeepFresh($("fresh").innerHTML);
+      };
+      $("copy-live").onclick = async () => {
+        const list = await PSCrypto.listVault(pinMemory);
+        const text = (list.ok ? list.codes : []).filter((c) => !c.expired).map((c) => c.code).join("\n");
+        if (text) navigator.clipboard.writeText(text);
+      };
+      $("pin-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const err = $("pin-err");
+        const res = await PSCrypto.changeTeacherPin($("oldpin").value, $("newpin").value);
+        if (!res.ok) { err.hidden = false; err.textContent = res.error; return; }
+        pinMemory = $("newpin").value;
+        err.hidden = false;
+        err.style.color = "var(--success)";
+        err.textContent = "PIN updated. Vault re-encrypted.";
+      };
+      $("lock-btn").onclick = () => { pinMemory = ""; render(); };
+    }
+
+    async function renderDeskKeepFresh(freshHtml) {
+      await renderDesk();
+      const fresh = $("fresh");
+      if (fresh && freshHtml) {
+        fresh.innerHTML = freshHtml;
+        fresh.querySelectorAll(".code-chip").forEach((btn) => {
+          btn.onclick = () => navigator.clipboard.writeText(btn.dataset.code);
+        });
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
