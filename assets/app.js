@@ -348,7 +348,7 @@ function renderLabsLock() {
     ICON_SVG.discord + " Join Discord to get a passcode</a>" +
     '<form id="lab-unlock-form" class="unlock-form" autocomplete="off">' +
     '<label class="field">One-time passcode' +
-    '<input id="lab-code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX" aria-label="Lab passcode" required />' +
+    '<input id="lab-code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" aria-label="Lab passcode" required />' +
     "</label>" +
     '<p class="form-error" id="lab-err" hidden></p>' +
     '<button class="tool-btn run-btn" type="submit">Unlock Labs</button>' +
