@@ -49,7 +49,7 @@ def add_cors(resp):
     if origin == FRONTEND_ORIGIN or origin.startswith(FRONTEND_ORIGIN + "/") or allowed_local:
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Access-Control-Allow-Credentials"] = "true"
-        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
         resp.headers["Vary"] = "Origin"
     return resp
@@ -160,8 +160,49 @@ def _put_issued(token: str, issued: list[dict], sha: str | None) -> None:
         raise RuntimeError(f"Publish issued.json failed ({r.status_code}): {r.text[:240]}")
 
 
+def _teacher_jwt(login: str, name: str, avatar: str) -> str:
+    now = int(time.time())
+    return jwt.encode(
+        {
+            "login": login,
+            "name": name,
+            "avatar": avatar,
+            "iat": now,
+            "exp": now + 12 * 3600,
+            "iss": "python-strudy-teacher",
+        },
+        app.secret_key,
+        algorithm="HS256",
+    )
+
+
+def teacher_identity() -> dict[str, str] | None:
+    login = str(session.get("github_login") or "").lower()
+    if login == TEACHER_LOGIN:
+        return {
+            "login": login,
+            "name": str(session.get("github_name") or login),
+            "avatar": str(session.get("github_avatar") or ""),
+        }
+    auth = request.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        raw = auth.split(" ", 1)[1].strip()
+        try:
+            data = jwt.decode(raw, app.secret_key, algorithms=["HS256"])
+        except Exception:
+            return None
+        login = str(data.get("login") or "").lower()
+        if login == TEACHER_LOGIN:
+            return {
+                "login": login,
+                "name": str(data.get("name") or login),
+                "avatar": str(data.get("avatar") or ""),
+            }
+    return None
+
+
 def require_teacher() -> bool:
-    return str(session.get("github_login") or "").lower() == TEACHER_LOGIN
+    return teacher_identity() is not None
 
 
 def _oauth_redirect_uri() -> str:
@@ -247,30 +288,29 @@ def github_callback():
     user_r = requests.get("https://api.github.com/user", headers=_gh_headers(access_token), timeout=20)
     if user_r.status_code >= 400:
         return "Could not read GitHub user", 502
-    login = str(user_r.json().get("login") or "").lower()
+    user = user_r.json()
+    login = str(user.get("login") or "").lower()
+    name = str(user.get("name") or login)
+    avatar = str(user.get("avatar_url") or "")
     next_url = session.pop("oauth_next", None) or f"{FRONTEND_ORIGIN}/python-strudy/admin.html"
+    next_url = next_url.split("#")[0]
     if login != TEACHER_LOGIN:
         session.clear()
         sep = "&" if "?" in next_url else "?"
         return redirect(f"{next_url}{sep}err=forbidden&login={login}")
     session["github_login"] = login
-    session["github_name"] = user_r.json().get("name") or login
-    session["github_avatar"] = user_r.json().get("avatar_url") or ""
-    return redirect(next_url)
+    session["github_name"] = name
+    session["github_avatar"] = avatar
+    desk_token = _teacher_jwt(login, name, avatar)
+    return redirect(f"{next_url}#ts={desk_token}")
 
 
 @app.get("/api/session")
 def api_session():
-    if not require_teacher():
+    ident = teacher_identity()
+    if not ident:
         return jsonify({"ok": False, "login": None}), 401
-    return jsonify(
-        {
-            "ok": True,
-            "login": session.get("github_login"),
-            "name": session.get("github_name"),
-            "avatar": session.get("github_avatar"),
-        }
-    )
+    return jsonify({"ok": True, **ident})
 
 
 @app.post("/api/logout")
