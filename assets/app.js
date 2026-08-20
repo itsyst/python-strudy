@@ -2,7 +2,7 @@
 
 const KNOWN_META = {
   exams: { title: "Exams", icon: "📝", desc: "Past tentor by date — edit & run" },
-  labs: { title: "Labs", icon: "🔬", desc: "Labbar & solutions — Discord for codes" },
+  labs: { title: "Labs", icon: "🔬", desc: "Labbar — locked until a Discord passcode" },
   exercises: { title: "Exercises", icon: "✏️", desc: "Practice exercises — edit & run" },
   seminars: { title: "Seminars", icon: "💬", desc: "Seminar examples — edit & run" },
   lectures: { title: "Lectures", icon: "📚", desc: "Lecture notes & code" },
@@ -130,6 +130,10 @@ async function showSection(section) {
   lastView = section;
   await ensureData();
   showView(section);
+  if (section === "labs" && window.PSCrypto && !(await PSCrypto.hasLabSession())) {
+    renderLabsLock();
+    return;
+  }
   renderSection(section, ($("search") && $("search").value) || "");
 }
 
@@ -161,6 +165,9 @@ function buildUI() {
       btn.className = "nav-btn";
       btn.dataset.view = sec;
       btn.textContent = m.title;
+      if (sec === "labs") {
+        btn.insertAdjacentHTML("beforeend", '<span class="lock-dot" title="Locked">🔒</span>');
+      }
       btn.onclick = function () { showSection(sec); };
       nav.appendChild(btn);
     });
@@ -179,13 +186,14 @@ function buildUI() {
         "<h2>" + m.icon + " " + m.title + "</h2>" +
         "<p>" + m.desc + "</p>" +
         "</header>" +
-        '<div id="' + sec + '-list" class="file-grid"></div>';
+        '<div id="' + sec + '-list" class="file-grid"></div>' +
+        (sec === "labs" ? '<div id="labs-lock" class="labs-lock" hidden></div>' : "");
       host.appendChild(section);
     });
   }
 }
 
-function renderHome() {
+async function renderHome() {
   const box = $("home-cards");
   if (!box) return;
   box.innerHTML = "";
@@ -194,6 +202,7 @@ function renderHome() {
       '<p class="empty">No sections found. Add folders and run <code>python update_files.py</code>.</p>';
     return;
   }
+  const labsOpen = window.PSCrypto ? await PSCrypto.hasLabSession() : false;
   SECTIONS.forEach(function (sec) {
     const m = metaFor(sec);
     const n = countFiles(cache[sec]);
@@ -201,11 +210,14 @@ function renderHome() {
     card.className = "card";
     card.type = "button";
     card.onclick = function () { showSection(sec); };
+    const locked = sec === "labs" && !labsOpen;
     card.innerHTML =
       '<div class="card-icon">' + m.icon + "</div>" +
-      "<h3>" + m.title + "</h3>" +
+      "<h3>" + m.title + (locked ? ' <span class="lock-dot">🔒</span>' : "") + "</h3>" +
       "<p>" + m.desc + "</p>" +
-      '<span class="count">' + (n ? n + " files" : "Open →") + "</span>";
+      '<span class="count">' +
+      (locked ? "Discord passcode" : n ? n + " files" : "Open →") +
+      "</span>";
     box.appendChild(card);
   });
 }
@@ -214,7 +226,23 @@ function renderSection(sec, filter) {
   filter = filter || "";
   const el = $(sec + "-list");
   if (!el) return;
+  const lock = $("labs-lock");
+  if (sec === "labs" && lock) lock.hidden = true;
   el.innerHTML = "";
+  if (sec === "labs" && window.PSCrypto) {
+    const bar = document.createElement("div");
+    bar.className = "unlocked-bar";
+    bar.innerHTML = '<span>Labs unlocked on this device</span><button type="button" class="tool-btn" id="relock">Lock again</button>';
+    el.appendChild(bar);
+    const btn = bar.querySelector("#relock");
+    if (btn) {
+      btn.onclick = function () {
+        PSCrypto.lockLabs();
+        showSection("labs");
+        renderHome();
+      };
+    }
+  }
   const q = filter.toLowerCase().trim();
   const groups = cache[sec] || [];
   let any = false;
@@ -280,7 +308,56 @@ function isPython(path) {
   return /\.py$/i.test(path || "");
 }
 
+function isLabsPath(path) {
+  return /^labs\//i.test(path || "");
+}
+
+function renderLabsLock() {
+  const list = $("labs-list");
+  const lock = $("labs-lock");
+  if (list) list.innerHTML = "";
+  if (!lock) return;
+  lock.hidden = false;
+  lock.innerHTML =
+    '<div class="lock-card">' +
+    "<h3>Labs are locked</h3>" +
+    "<p>Join the Discord, ask for a one-time passcode, then unlock here. A code lasts 3 days if nobody uses it. Using it burns it on this device and opens Labs for 3 days.</p>" +
+    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Join Discord</a>' +
+    '<form id="lab-unlock-form" class="unlock-form" autocomplete="off">' +
+    '<label class="field">Passcode' +
+    '<input id="lab-code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH" aria-label="Lab passcode" required />' +
+    "</label>" +
+    '<p class="form-error" id="lab-err" hidden></p>' +
+    '<button class="tool-btn run-btn" type="submit">Unlock labs</button>' +
+    "</form>" +
+    '<p class="support-line">Keep the materials free:' +
+    ' <a href="https://ko-fi.com/itsyst" target="_blank" rel="noopener">Ko-fi</a> ·' +
+    ' <a href="https://www.patreon.com/c/itsyst" target="_blank" rel="noopener">Patreon</a></p>' +
+    "</div>";
+  const form = $("lab-unlock-form");
+  if (form) {
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const err = $("lab-err");
+      err.hidden = true;
+      const res = await PSCrypto.redeemCode($("lab-code").value);
+      if (!res.ok) {
+        err.hidden = false;
+        err.textContent = res.error;
+        return;
+      }
+      lock.hidden = true;
+      renderSection("labs", ($("search") && $("search").value) || "");
+      renderHome();
+    });
+  }
+}
+
 async function openFile(path, name) {
+  if (isLabsPath(path) && window.PSCrypto && !(await PSCrypto.hasLabSession())) {
+    showSection("labs");
+    return;
+  }
   showView("viewer");
   currentPath = path;
   currentName = name || path;
