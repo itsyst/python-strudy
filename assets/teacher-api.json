@@ -1,4 +1,4 @@
 {
-  "apiBase": "https://ps-teacher-live.vercel.app/",
-  "note": "Set apiBase to your deployed teacher-server URL."
+  "apiBase": "https://python-strudy-backend.vercel.app",
+  "note": "Deployed teacher-server URL"
 }

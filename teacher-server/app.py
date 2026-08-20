@@ -12,24 +12,29 @@ import jwt
 import requests
 from flask import Flask, jsonify, redirect, request, session
 
+
+def _env(name: str, default: str = "") -> str:
+    return (os.environ.get(name) or default).strip()
+
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app.secret_key = _env("FLASK_SECRET_KEY") or secrets.token_hex(32)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
 )
 
-OWNER = os.environ.get("GITHUB_OWNER", "itsyst")
-REPO = os.environ.get("GITHUB_REPO", "python-strudy")
-TEACHER_LOGIN = os.environ.get("TEACHER_LOGIN", OWNER).lower()
-INSTALLATION_ID = int(os.environ.get("GITHUB_INSTALLATION_ID", "0") or "0")
-FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "https://itsyst.github.io").rstrip("/")
-PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
-OAUTH_CLIENT_ID = os.environ.get("GITHUB_OAUTH_CLIENT_ID", "")
-OAUTH_CLIENT_SECRET = os.environ.get("GITHUB_OAUTH_CLIENT_SECRET", "")
-APP_ID = os.environ.get("GITHUB_APP_ID", "")
-PRIVATE_KEY_PEM = (os.environ.get("GITHUB_PRIVATE_KEY") or "").replace("\\n", "\n")
+OWNER = _env("GITHUB_OWNER", "itsyst")
+REPO = _env("GITHUB_REPO", "python-strudy")
+TEACHER_LOGIN = _env("TEACHER_LOGIN", OWNER).lower()
+INSTALLATION_ID = int(_env("GITHUB_INSTALLATION_ID", "0") or "0")
+FRONTEND_ORIGIN = _env("FRONTEND_ORIGIN", "https://itsyst.github.io").rstrip("/")
+PUBLIC_BASE_URL = _env("PUBLIC_BASE_URL").rstrip("/")
+OAUTH_CLIENT_ID = _env("GITHUB_OAUTH_CLIENT_ID")
+OAUTH_CLIENT_SECRET = _env("GITHUB_OAUTH_CLIENT_SECRET")
+APP_ID = _env("GITHUB_APP_ID")
+PRIVATE_KEY_PEM = _env("GITHUB_PRIVATE_KEY").replace("\\n", "\n")
 
 ISSUED_PATH = "assets/issued.json"
 TTL_MS = 3 * 24 * 60 * 60 * 1000
