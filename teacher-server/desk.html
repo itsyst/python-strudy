@@ -21,12 +21,12 @@
 <body>
   <header class="navbar" role="navigation">
     <div class="nav-inner">
-      <a class="nav-brand" href="index.html" title="Home" style="text-decoration:none">
+      <a class="nav-brand" href="https://itsyst.github.io/python-strudy/" title="Home" style="text-decoration:none">
         <span class="logo-mark" aria-hidden="true">P</span>
         <span class="brand-text">Python Study</span>
       </a>
       <div class="nav-links">
-        <a class="nav-btn" href="index.html">Student site</a>
+        <a class="nav-btn" href="https://itsyst.github.io/python-strudy/">Student site</a>
         <span class="nav-btn active">Teacher</span>
       </div>
     </div>
@@ -97,7 +97,7 @@
     }
 
     async function renderLogin(errText) {
-      let href = "/auth/github";
+      let href = (location.origin || "") + "/auth/github";
       try {
         href = await PSCrypto.teacherLoginUrl();
       } catch (_) {}
