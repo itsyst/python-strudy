@@ -400,6 +400,11 @@
 
   async function getApiBase() {
     if (apiBaseCache !== null) return apiBaseCache;
+    var host = (location.hostname || "").toLowerCase();
+    if (host.indexOf("vercel.app") !== -1 || host === "localhost" || host === "127.0.0.1") {
+      apiBaseCache = location.origin.replace(/\/$/, "");
+      return apiBaseCache;
+    }
     try {
       const res = await fetch("assets/teacher-api.json", { cache: "no-store" });
       if (!res.ok) {
