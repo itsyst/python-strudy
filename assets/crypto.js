@@ -379,7 +379,24 @@
   const ISSUED_PATH = "assets/issued.json";
 
   /* ---------- Teacher backend (no browser tokens) ---------- */
+  const TEACHER_JWT_KEY = "ps.v1.teacherJwt";
   let apiBaseCache = null;
+
+  function captureTeacherJwt() {
+    const h = location.hash || "";
+    if (h.indexOf("#ts=") === 0) {
+      sessionStorage.setItem(TEACHER_JWT_KEY, decodeURIComponent(h.slice(4)));
+      history.replaceState({}, "", location.pathname + location.search);
+    }
+  }
+
+  function teacherHeaders(extra) {
+    captureTeacherJwt();
+    const headers = Object.assign({}, extra || {});
+    const tok = sessionStorage.getItem(TEACHER_JWT_KEY);
+    if (tok) headers.Authorization = "Bearer " + tok;
+    return headers;
+  }
 
   async function getApiBase() {
     if (apiBaseCache !== null) return apiBaseCache;
@@ -412,6 +429,7 @@
       const res = await fetch(base + "/api/session", {
         credentials: "include",
         cache: "no-store",
+        headers: teacherHeaders(),
       });
       if (res.status === 401) return { ok: false, error: "" };
       if (!res.ok) return { ok: false, error: "Session check failed." };
@@ -426,9 +444,10 @@
   async function teacherLogout() {
     const base = await getApiBase();
     sessionStorage.removeItem("ps.v1.lastcodes");
+    sessionStorage.removeItem(TEACHER_JWT_KEY);
     if (!base) return;
     try {
-      await fetch(base + "/api/logout", { method: "POST", credentials: "include" });
+      await fetch(base + "/api/logout", { method: "POST", credentials: "include", headers: teacherHeaders() });
     } catch (_) {}
   }
 
@@ -467,7 +486,7 @@
       const res = await fetch(base + "/api/codes", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: teacherHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ count: count }),
       });
       const data = await res.json().catch(function () {
