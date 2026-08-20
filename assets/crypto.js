@@ -114,8 +114,11 @@
     const s = String(raw || "")
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "");
-    if (s.length !== 8) return "";
-    return s.slice(0, 4) + "-" + s.slice(4);
+    if (s.length === 8) return s.slice(0, 4) + "-" + s.slice(4);
+    if (s.length === 16) {
+      return s.slice(0, 4) + "-" + s.slice(4, 8) + "-" + s.slice(8, 12) + "-" + s.slice(12);
+    }
+    return "";
   }
 
   async function checksumFor(payload, bucket) {
@@ -125,11 +128,11 @@
 
   async function mintCode(now) {
     now = now || Date.now();
-    const rnd = crypto.getRandomValues(new Uint8Array(8));
-    const payload = bytesToCodeChars(rnd, 4);
+    const rnd = crypto.getRandomValues(new Uint8Array(16));
+    const payload = bytesToCodeChars(rnd, 12);
     const bucket = timeBucket(now);
     const check = await checksumFor(payload, bucket);
-    const code = payload + "-" + check;
+    const code = payload.slice(0, 4) + "-" + payload.slice(4, 8) + "-" + payload.slice(8, 12) + "-" + check;
     return {
       code: code,
       hash: await sha256Hex(code),
@@ -140,9 +143,10 @@
 
   async function verifyIssuedCode(raw) {
     const code = normalizeCode(raw);
-    if (!code) return { ok: false, error: "Use a code like ABCD-EFGH." };
-    const payload = code.slice(0, 4);
-    const check = code.slice(5);
+    if (!code) return { ok: false, error: "Use a code like ABCD-EFGH-IJKL-MNOP." };
+    const compact = code.replace(/[^A-Z0-9]/g, "");
+    const payload = compact.slice(0, -4);
+    const check = compact.slice(-4);
     const bucket = timeBucket(Date.now());
     for (let b = bucket; b >= bucket - 1; b--) {
       if (b < 0) continue;
