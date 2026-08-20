@@ -381,8 +381,14 @@ async function openFile(path, name) {
   $("viewer-title").textContent = currentName;
   const raw = $("raw-link");
   if (raw) {
-    raw.href = path;
-    raw.setAttribute("download", name || "");
+    if (isLabsPath(path)) {
+      raw.hidden = true;
+      raw.removeAttribute("href");
+    } else {
+      raw.hidden = false;
+      raw.href = path;
+      raw.setAttribute("download", name || "");
+    }
   }
   currentCode = "";
   originalCode = "";
@@ -410,9 +416,19 @@ async function openFile(path, name) {
     $("code-content").textContent = "Loading…";
   }
   try {
-    const res = await fetch(path);
-    if (!res.ok) throw new Error("Not found (" + res.status + ")");
-    const text = await res.text();
+    let text = null;
+    if (isLabsPath(path) && window.PSCrypto) {
+      if (!(await PSCrypto.hasLabSession())) {
+        showSection("labs");
+        return;
+      }
+      text = await PSCrypto.decryptLabFile(path);
+    }
+    if (text == null) {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("Not found (" + res.status + ")");
+      text = await res.text();
+    }
     currentCode = text;
     originalCode = text;
     if (isPython(path)) {
@@ -629,6 +645,12 @@ function findFiles(query) {
 }
 
 async function fetchText(path) {
+  if (/^labs\//i.test(path) && window.PSCrypto && PSCrypto.decryptLabFile) {
+    try {
+      const v = await PSCrypto.decryptLabFile(path);
+      if (v != null) return v;
+    } catch (_) {}
+  }
   const res = await fetch(path);
   if (!res.ok) return null;
   return res.text();
@@ -942,10 +964,47 @@ function wirePlayground() {
   }
 }
 
+async function runDeviceGate() {
+  const gate = $("device-gate");
+  const confirmed = window.PSCrypto && PSCrypto.deviceConfirmed();
+  const match = confirmed ? await PSCrypto.bindingMatches() : { ok: false, reason: "not-confirmed" };
+  if (match.ok) {
+    if (gate) gate.hidden = true;
+    return;
+  }
+  if (!gate) return;
+  gate.hidden = false;
+  const probe = match.now || (await PSCrypto.probeDevice());
+  const why = {
+    "not-confirmed": "Confirm this device to continue.",
+    ip: "Your IP changed. Confirm the new IP to keep using this browser.",
+    device: "This does not look like the same device.",
+    browser: "This is a different browser. Confirm it separately.",
+    kind: "PC/mobile type changed. Confirm again.",
+  };
+  if ($("dg-why")) $("dg-why").textContent = why[match.reason] || why["not-confirmed"];
+  if ($("dg-ip")) $("dg-ip").textContent = probe.ip || "unknown";
+  if ($("dg-mac")) $("dg-mac").textContent = "not readable in a browser";
+  if ($("dg-id")) $("dg-id").textContent = probe.deviceId || "—";
+  if ($("dg-kind")) $("dg-kind").textContent = probe.kind || "—";
+  if ($("dg-browser")) $("dg-browser").textContent = probe.browser || "—";
+  return new Promise(function (resolve) {
+    const form = $("dg-form");
+    if (!form) return resolve();
+    form.onsubmit = async function (e) {
+      e.preventDefault();
+      await PSCrypto.confirmDevice();
+      gate.hidden = true;
+      resolve();
+    };
+  });
+}
+
 async function boot() {
   wireSearch();
   wireToggle();
   wirePlayground();
+  await runDeviceGate();
   showHome();
   try {
     await ensureData();

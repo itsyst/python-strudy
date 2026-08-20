@@ -132,6 +132,15 @@
               : "<li class='muted'>No codes yet.</li>"
           }</ul>
         </div>
+        <div class="admin-card">
+          <h2>Unlock log (this browser)</h2>
+          <p class="muted">IP + device ID + browser for codes redeemed here. Not a global student list.</p>
+          <ul class="vault-list">${
+            (PSCrypto.readLog() || []).slice().reverse().map((e) =>
+              `<li><code>${e.hash || "—"}</code><span>${e.ip || "?"} · ${e.kind || "?"} · ${e.browser || "?"} · ${fmt(e.at)}</span></li>`
+            ).join("") || "<li class='muted'>No unlocks on this computer.</li>"
+          }</ul>
+        </div>
         <form class="admin-card" id="pin-form">
           <h2>Change PIN</h2>
           <label class="field">Current PIN

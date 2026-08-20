@@ -100,6 +100,28 @@
     </div>
   </footer>
 
+  <div id="device-gate" class="device-gate" hidden>
+    <div class="device-card">
+      <p class="hero-badge">Device check</p>
+      <h2>Confirm this IP and device</h2>
+      <p id="dg-why" class="hero-sub">Labs unlock is bound to this browser, this IP, and a device ID (browsers never expose a MAC address).</p>
+      <dl class="device-dl">
+        <div><dt>IP</dt><dd id="dg-ip">…</dd></div>
+        <div><dt>MAC</dt><dd id="dg-mac">…</dd></div>
+        <div><dt>Device ID</dt><dd id="dg-id">…</dd></div>
+        <div><dt>Type</dt><dd id="dg-kind">…</dd></div>
+        <div><dt>Browser</dt><dd id="dg-browser">…</dd></div>
+      </dl>
+      <form id="dg-form">
+        <label class="check">
+          <input type="checkbox" id="dg-ok" required />
+          I confirm this IP and device ID for Python Study
+        </label>
+        <button class="tool-btn run-btn" type="submit">Confirm and continue</button>
+      </form>
+    </div>
+  </div>
+
   <script src="assets/crypto.js"></script>
   <script src="assets/app.js"></script>
 </body>
