@@ -87,11 +87,11 @@
     function renderSetup() {
       $("admin-panel").innerHTML = `
         <div class="admin-card">
-          <h2>Backend not configured</h2>
+          <h2>Open the teacher desk on Vercel</h2>
           <p class="muted">
-            Personal access tokens are no longer accepted in the browser.
-            Deploy <code>teacher-server/</code> (GitHub OAuth + GitHub App), then set
-            <code>apiBase</code> in <code>assets/teacher-api.json</code>.
+            The backend URL is not stored in this GitHub repo.
+            In Vercel open project <strong>python-strudy-backend</strong> and visit
+            <strong>/desk</strong> (the app already knows its own URL from <code>PUBLIC_BASE_URL</code>).
           </p>
         </div>`;
     }
