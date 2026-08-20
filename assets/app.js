@@ -166,7 +166,10 @@ function buildUI() {
       btn.dataset.view = sec;
       btn.textContent = m.title;
       if (sec === "labs") {
-        btn.insertAdjacentHTML("beforeend", '<span class="lock-dot" title="Locked">🔒</span>');
+        btn.insertAdjacentHTML(
+          "beforeend",
+          '<svg class="lock-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+        );
       }
       btn.onclick = function () { showSection(sec); };
       nav.appendChild(btn);
@@ -213,7 +216,7 @@ async function renderHome() {
     const locked = sec === "labs" && !labsOpen;
     card.innerHTML =
       '<div class="card-icon">' + m.icon + "</div>" +
-      "<h3>" + m.title + (locked ? ' <span class="lock-dot">🔒</span>' : "") + "</h3>" +
+      "<h3>" + m.title + (locked ? ' <svg class="lock-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>' : "") + "</h3>" +
       "<p>" + m.desc + "</p>" +
       '<span class="count">' +
       (locked ? "Discord passcode" : n ? n + " files" : "Open →") +
@@ -321,7 +324,7 @@ function renderLabsLock() {
   lock.innerHTML =
     '<div class="lock-card">' +
     "<h3>Labs are locked</h3>" +
-    "<p>Join the Discord, ask for a one-time passcode, then unlock here. A code lasts 3 days if nobody uses it. Using it burns it on this device and opens Labs for 3 days.</p>" +
+    "<p>Join Discord for a one-time passcode. Each code works once on this device and IP, then it is erased. Unused codes expire after 3 days.</p>" +
     '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">Join Discord</a>' +
     '<form id="lab-unlock-form" class="unlock-form" autocomplete="off">' +
     '<label class="field">Passcode' +

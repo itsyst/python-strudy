@@ -690,6 +690,22 @@
       "group": "labb-8",
       "items": [
         {
+          "name": "cal_abstraction.py",
+          "path": "labs/labb-8/cal_abstraction.py"
+        },
+        {
+          "name": "cal_booking.py",
+          "path": "labs/labb-8/cal_booking.py"
+        },
+        {
+          "name": "cal_output.py",
+          "path": "labs/labb-8/cal_output.py"
+        },
+        {
+          "name": "cal_ui.py",
+          "path": "labs/labb-8/cal_ui.py"
+        },
+        {
           "name": "labb_8a.py",
           "path": "labs/labb-8/labb_8a.py"
         },
@@ -708,6 +724,10 @@
         {
           "name": "labb_8e.py",
           "path": "labs/labb-8/labb_8e.py"
+        },
+        {
+          "name": "settings.py",
+          "path": "labs/labb-8/settings.py"
         }
       ]
     },
@@ -992,6 +1012,10 @@
       "group": "sem07",
       "items": [
         {
+          "name": "Ihopslagning.py",
+          "path": "seminars/sem07/Ihopslagning.py"
+        },
+        {
           "name": "code.py",
           "path": "seminars/sem07/code.py"
         },
@@ -1006,10 +1030,6 @@
         {
           "name": "identifiera_ord.py",
           "path": "seminars/sem07/identifiera_ord.py"
-        },
-        {
-          "name": "Ihopslagning.py",
-          "path": "seminars/sem07/Ihopslagning.py"
         },
         {
           "name": "prefix.py",
