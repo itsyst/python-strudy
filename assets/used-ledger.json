@@ -1,1 +1,9 @@
-{ "used": [], "note": "Hashes of redeemed lab codes. Teacher can publish updates here so other browsers reject spent codes." }
+{
+  "used": [
+    {
+      "hash": "36af8d30f6c4b7e6ee810b8176cf9bf80220d575bcd8eedd56cca2b0c4d8f716",
+      "at": 1787344690441
+    }
+  ],
+  "note": "Hashes of redeemed lab codes. Global one-time ledger."
+}
