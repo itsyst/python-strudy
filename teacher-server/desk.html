@@ -36,10 +36,6 @@
     <section class="view active admin-page">
       <p class="hero-badge">Teacher desk</p>
       <h1>Lab passcodes</h1>
-      <p class="hero-sub" style="margin-left:0;text-align:left">
-        Only the GitHub owner <strong>@itsyst</strong>, signed in via the teacher backend, can generate lab codes.
-        No personal access tokens are ever stored in the browser.
-      </p>
 
       <div id="admin-panel" class="admin-grid"></div>
     </section>
@@ -47,7 +43,7 @@
 
   <footer class="site-footer">
     <div class="footer-bottom">
-      <p>Teacher desk: GitHub owner @itsyst only · tokens never leave the server</p>
+      <p>Teacher desk</p>
     </div>
   </footer>
 
@@ -56,15 +52,15 @@
     const $ = (id) => document.getElementById(id);
     function esc(s) {
       return String(s || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
+        .replace(/&/g, "&")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/\"/g, """)
         .replace(/'/g, "&#39;");
     }
 
     function fmt(ts) {
-      if (!ts) return "—";
+      if (!ts) return "-";
       return new Date(ts).toLocaleString();
     }
 
@@ -96,11 +92,6 @@
       $("admin-panel").innerHTML = `
         <div class="admin-card">
           <h2>Backend not configured</h2>
-          <p class="muted">
-            Personal access tokens are no longer accepted in the browser.
-            Deploy <code>teacher-server/</code> (GitHub OAuth + GitHub App), then set
-            <code>apiBase</code> in <code>assets/teacher-api.json</code>.
-          </p>
         </div>`;
     }
 
@@ -111,11 +102,6 @@
       } catch (_) {}
       $("admin-panel").innerHTML = `
         <div class="admin-card" id="login-card">
-          <h2>Sign in with GitHub</h2>
-          <p class="muted">
-            You will be redirected to GitHub. Only account <strong>@itsyst</strong> is accepted.
-            No token is ever pasted or stored in this browser.
-          </p>
           <p class="form-error" id="err" ${errText ? "" : "hidden"}>${esc(errText)}</p>
           <a class="tool-btn run-btn" id="github-login" href="${href}">Sign in with GitHub</a>
         </div>`;
@@ -128,12 +114,10 @@
       $("admin-panel").innerHTML = `
         <div class="admin-card">
           <h2>Signed in as @${esc(sess.login)}</h2>
-          <p class="muted">Repo owner of itsyst/python-strudy. Codes are published as hashes only — the browser never holds a GitHub token.</p>
           <button class="tool-btn" type="button" id="lock-btn">Sign out</button>
         </div>
         <form class="admin-card" id="mint-form">
           <h2>Generate codes</h2>
-          <p class="muted">Published to <code>assets/issued.json</code> via the GitHub App, then share the codes on Discord.</p>
           <label class="field">How many
             <input type="number" id="count" min="1" max="20" value="5" />
           </label>
@@ -148,7 +132,7 @@
         </form>
         <div class="admin-card">
           <h2>Issued on GitHub</h2>
-          <p class="muted">${rows.length} live hashes in the repo (plaintext codes are not stored there)</p>
+          <p class="muted">${rows.length} live hashes</p>
           <div class="btn-row" style="margin:0.6rem 0 0.8rem">
             <button class="tool-btn" type="button" id="revoke-all">Revoke all live codes</button>
           </div>
@@ -177,7 +161,7 @@
         renderDesk(sess);
       };
       $("copy-live").onclick = () => {
-        const text = last.map((c) => c.code).join("\n");
+        const text = last.map((c) => c.code).join("\\n");
         if (text) navigator.clipboard.writeText(text);
       };
       $("fresh").querySelectorAll(".code-chip").forEach((btn) => {
