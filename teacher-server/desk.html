@@ -102,6 +102,7 @@
       } catch (_) {}
       $("admin-panel").innerHTML = `
         <div class="admin-card" id="login-card">
+          <p class="muted">Labs stay locked until a student redeems a one-time code from Discord.</p>
           <p class="form-error" id="err" ${errText ? "" : "hidden"}>${esc(errText)}</p>
           <a class="tool-btn run-btn" id="github-login" href="${href}">Sign in</a>
         </div>`;
