@@ -344,7 +344,7 @@ function renderLabsLock() {
     '<div class="lock-mark">' + ICON_SVG.lock + "</div>" +
     "<h3>Labs are locked</h3>" +
     "<p>Join Discord for a one-time passcode. Each code works once on this device and IP, then it is erased. Unused codes expire after 3 days.</p>" +
-    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/mR9JByCr7" target="_blank" rel="noopener">' +
+    '<a class="tool-btn run-btn discord-btn" href="https://discord.gg/E6rbEb9WG2" target="_blank" rel="noopener">' +
     ICON_SVG.discord + " Join Discord to get a passcode</a>" +
     '<form id="lab-unlock-form" class="unlock-form" autocomplete="off">' +
     '<label class="field">One-time passcode' +
